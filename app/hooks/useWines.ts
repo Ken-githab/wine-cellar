@@ -149,30 +149,40 @@ export function useWines(user: User | null) {
       const updated: Wine = { ...existing, ...data, updatedAt: now };
 
       if (isSupabaseConfigured && user) {
-        const { error } = await supabase
+        const payload = {
+          name: updated.name,
+          producer: updated.producer,
+          vintage: updated.vintage || null,
+          country: updated.country,
+          region: updated.region,
+          grape_variety: updated.grapeVariety,
+          price: updated.price || null,
+          url: updated.url || null,
+          use_coravin: updated.useCoravin,
+          photos: updated.photos,
+          tasting_note: updated.tastingNote,
+          updated_at: now,
+        };
+        console.log("[updateWine] user.id:", user.id, "wine id:", id);
+        console.log("[updateWine] payload:", JSON.stringify({ ...payload, photos: `[${payload.photos.length} photos]` }));
+
+        const { error, status, statusText } = await supabase
           .from("wines")
-          .update({
-            name: updated.name,
-            producer: updated.producer,
-            vintage: updated.vintage || null,
-            country: updated.country,
-            region: updated.region,
-            grape_variety: updated.grapeVariety,
-            price: updated.price || null,
-            url: updated.url || null,
-            use_coravin: updated.useCoravin,
-            photos: updated.photos,
-            tasting_note: updated.tastingNote,
-            updated_at: now,
-          })
-          .eq("id", id);
+          .update(payload)
+          .eq("id", id)
+          .eq("user_id", user.id);
+        console.log("[updateWine] UPDATE status:", status, statusText, "error:", error);
         if (error) throw error;
-        // UPDATE後にDBから最新データを取得して反映
-        const { data: fresh } = await supabase
+
+        const { data: fresh, error: fetchErr } = await supabase
           .from("wines")
           .select("*")
           .eq("id", id)
+          .eq("user_id", user.id)
           .limit(1);
+        console.log("[updateWine] fresh SELECT:", fresh?.length, "rows, error:", fetchErr);
+        console.log("[updateWine] fresh tasting_note:", JSON.stringify(fresh?.[0]?.tasting_note));
+
         const confirmed = fresh?.[0] ? fromRow(fresh[0]) : updated;
         const next = wines.map((w) => (w.id === id ? confirmed : w));
         setWines(next);
