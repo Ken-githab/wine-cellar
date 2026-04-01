@@ -13,6 +13,12 @@ const LOCAL_KEY  = "wine-cellar-local";  // Supabase未設定時のローカル�
 // ─── DB <-> App 変換 ─────────────────────────────────────────────────────────
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function fromRow(row: any): Wine {
+  // Supabase が JSONB を文字列として返す場合があるので parse する
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let tn: any = row.tasting_note ?? {};
+  if (typeof tn === "string") {
+    try { tn = JSON.parse(tn); } catch { tn = {}; }
+  }
   return {
     id: row.id,
     name: row.name,
@@ -26,12 +32,12 @@ function fromRow(row: any): Wine {
     useCoravin: row.use_coravin ?? false,
     photos: row.photos ?? [],
     tastingNote: {
-      rating: row.tasting_note?.rating ?? 0,
-      memo: row.tasting_note?.memo ?? "",
-      date: row.tasting_note?.date ?? "",
+      rating: tn.rating ?? 0,
+      memo: tn.memo ?? "",
+      date: tn.date ?? "",
       detailedRatings: {
         ...EMPTY_DETAILED_RATINGS,
-        ...(row.tasting_note?.detailedRatings ?? {}),
+        ...(tn.detailedRatings ?? {}),
       },
     },
     createdAt: row.created_at,
@@ -149,42 +155,26 @@ export function useWines(user: User | null) {
       const updated: Wine = { ...existing, ...data, updatedAt: now };
 
       if (isSupabaseConfigured && user) {
-        const payload = {
-          name: updated.name,
-          producer: updated.producer,
-          vintage: updated.vintage || null,
-          country: updated.country,
-          region: updated.region,
-          grape_variety: updated.grapeVariety,
-          price: updated.price || null,
-          url: updated.url || null,
-          use_coravin: updated.useCoravin,
-          photos: updated.photos,
-          tasting_note: updated.tastingNote,
-          updated_at: now,
-        };
-        console.log("[updateWine] user.id:", user.id, "wine id:", id);
-        console.log("[updateWine] payload:", JSON.stringify({ ...payload, photos: `[${payload.photos.length} photos]` }));
-
-        const { error, status, statusText } = await supabase
+        const { error } = await supabase
           .from("wines")
-          .update(payload)
+          .update({
+            name: updated.name,
+            producer: updated.producer,
+            vintage: updated.vintage || null,
+            country: updated.country,
+            region: updated.region,
+            grape_variety: updated.grapeVariety,
+            price: updated.price || null,
+            url: updated.url || null,
+            use_coravin: updated.useCoravin,
+            photos: updated.photos,
+            tasting_note: updated.tastingNote,
+            updated_at: now,
+          })
           .eq("id", id)
           .eq("user_id", user.id);
-        console.log("[updateWine] UPDATE status:", status, statusText, "error:", error);
         if (error) throw error;
-
-        const { data: fresh, error: fetchErr } = await supabase
-          .from("wines")
-          .select("*")
-          .eq("id", id)
-          .eq("user_id", user.id)
-          .limit(1);
-        console.log("[updateWine] fresh SELECT:", fresh?.length, "rows, error:", fetchErr);
-        console.log("[updateWine] fresh tasting_note:", JSON.stringify(fresh?.[0]?.tasting_note));
-
-        const confirmed = fresh?.[0] ? fromRow(fresh[0]) : updated;
-        const next = wines.map((w) => (w.id === id ? confirmed : w));
+        const next = wines.map((w) => (w.id === id ? updated : w));
         setWines(next);
         saveCache(next);
       } else {
