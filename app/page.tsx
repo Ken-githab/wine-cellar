@@ -1,65 +1,272 @@
-import Image from "next/image";
+"use client";
+
+import { useState, useMemo, useEffect } from "react";
+import { useAuth } from "@/app/hooks/useAuth";
+import { useWines } from "@/app/hooks/useWines";
+import { LoginForm } from "@/app/components/LoginForm";
+import { WineCard } from "@/app/components/WineCard";
+import { WineForm } from "@/app/components/WineForm";
+import { Modal } from "@/app/components/Modal";
+import { Wine, WineFormData } from "@/app/types/wine";
+import { isSupabaseConfigured } from "@/app/lib/supabase";
+
+type SortKey = "createdAt" | "vintage" | "rating" | "name";
 
 export default function Home() {
+  const { user, loading: authLoading, signOut } = useAuth();
+  const { wines, isLoaded, isOnline, addWine, updateWine, deleteWine, migrateFromLocalStorage } =
+    useWines(user);
+
+  const [showAdd, setShowAdd] = useState(false);
+  const [editTarget, setEditTarget] = useState<Wine | null>(null);
+  const [search, setSearch] = useState("");
+  const [sortKey, setSortKey] = useState<SortKey>("createdAt");
+  const [migrateBanner, setMigrateBanner] = useState<{ count: number } | null>(null);
+  const [migrating, setMigrating] = useState(false);
+
+  // ログイン後に旧localStorageデータの移行を促す
+  useEffect(() => {
+    if (!user || !isLoaded || !isSupabaseConfigured) return;
+    try {
+      const old = localStorage.getItem("wine-cellar-data");
+      if (old) {
+        const parsed: Wine[] = JSON.parse(old);
+        if (parsed.length > 0) setMigrateBanner({ count: parsed.length });
+      }
+    } catch { /* ignore */ }
+  }, [user, isLoaded]);
+
+  const handleMigrate = async () => {
+    setMigrating(true);
+    await migrateFromLocalStorage();
+    setMigrateBanner(null);
+    setMigrating(false);
+  };
+
+  const filtered = useMemo(() => {
+    const q = search.toLowerCase();
+    const result = wines.filter(
+      (w) =>
+        !q ||
+        w.name.toLowerCase().includes(q) ||
+        w.producer.toLowerCase().includes(q) ||
+        w.region.toLowerCase().includes(q) ||
+        w.grapeVariety.toLowerCase().includes(q) ||
+        w.country.toLowerCase().includes(q)
+    );
+    return [...result].sort((a, b) => {
+      if (sortKey === "createdAt") return b.createdAt.localeCompare(a.createdAt);
+      if (sortKey === "vintage") return (Number(b.vintage) || 0) - (Number(a.vintage) || 0);
+      if (sortKey === "rating") return b.tastingNote.rating - a.tastingNote.rating;
+      if (sortKey === "name") return a.name.localeCompare(b.name, "ja");
+      return 0;
+    });
+  }, [wines, search, sortKey]);
+
+  const handleAdd = async (data: WineFormData) => {
+    await addWine(data);
+    setShowAdd(false);
+  };
+
+  const handleEdit = async (data: WineFormData) => {
+    if (editTarget) {
+      await updateWine(editTarget.id, data);
+      setEditTarget(null);
+    }
+  };
+
+  // 認証ローディング中
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-400 text-sm">読み込み中...</div>
+      </div>
+    );
+  }
+
+  // Supabase設定済みで未ログイン → ログイン画面
+  if (isSupabaseConfigured && !user) {
+    return <LoginForm />;
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-rose-900 text-white shadow-md">
+        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <span className="text-2xl">🍷</span>
+            <div>
+              <h1 className="text-xl font-bold leading-tight">Wine Cellar</h1>
+              <p className="text-rose-200 text-xs">
+                {user ? user.email : "マイワインコレクション"}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowAdd(true)}
+              className="flex items-center gap-1.5 bg-white text-rose-900 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-rose-50 transition shadow-sm"
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+              </svg>
+              <span className="hidden sm:inline">ワインを追加</span>
+              <span className="sm:hidden">追加</span>
+            </button>
+            {user && (
+              <button
+                onClick={() => signOut()}
+                className="p-2 rounded-lg text-rose-200 hover:text-white hover:bg-rose-800 transition"
+                title="ログアウト"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+              </button>
+            )}
+          </div>
+        </div>
+      </header>
+
+      {/* Offline banner */}
+      {!isOnline && (
+        <div className="bg-amber-50 border-b border-amber-200 text-amber-800 text-sm text-center py-2 px-4">
+          オフライン中 — キャッシュデータを表示しています
+        </div>
+      )}
+
+      {/* Migration banner */}
+      {migrateBanner && (
+        <div className="bg-blue-50 border-b border-blue-200 px-4 py-3">
+          <div className="max-w-5xl mx-auto flex items-center justify-between gap-4 flex-wrap">
+            <p className="text-sm text-blue-800">
+              📦 ローカルに <strong>{migrateBanner.count} 本</strong> のワインデータが見つかりました。
+              Supabaseへ移行しますか？
+            </p>
+            <div className="flex gap-2 shrink-0">
+              <button
+                onClick={() => setMigrateBanner(null)}
+                className="text-sm text-blue-600 hover:underline"
+              >
+                あとで
+              </button>
+              <button
+                onClick={handleMigrate}
+                disabled={migrating}
+                className="text-sm bg-blue-700 text-white px-3 py-1 rounded-lg hover:bg-blue-800 transition disabled:opacity-50"
+              >
+                {migrating ? "移行中..." : "移行する"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Main */}
+      <main className="max-w-5xl mx-auto px-4 py-6 space-y-5">
+        {/* Stats bar */}
+        {isLoaded && wines.length > 0 && (
+          <div className="flex gap-4 text-sm text-gray-600">
+            <span>
+              <strong className="text-gray-900">{wines.length}</strong> 本登録済み
+            </span>
+            {wines.filter((w) => w.useCoravin).length > 0 && (
+              <span>
+                <strong className="text-gray-900">
+                  {wines.filter((w) => w.useCoravin).length}
+                </strong>{" "}
+                本コラヴァン使用
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* Search & Sort */}
+        {isLoaded && wines.length > 0 && (
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
+              <svg
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-rose-300"
+                placeholder="ワイン名・国・産地・品種で検索..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            <select
+              className="py-2 px-3 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-rose-300 bg-white"
+              value={sortKey}
+              onChange={(e) => setSortKey(e.target.value as SortKey)}
             >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+              <option value="createdAt">登録順</option>
+              <option value="vintage">ヴィンテージ順</option>
+              <option value="rating">評価順</option>
+              <option value="name">名前順</option>
+            </select>
+          </div>
+        )}
+
+        {/* Wine list */}
+        {!isLoaded ? (
+          <div className="text-center py-20 text-gray-400">読み込み中...</div>
+        ) : wines.length === 0 ? (
+          <div className="text-center py-24 space-y-3">
+            <div className="text-6xl">🍾</div>
+            <p className="text-gray-500 text-lg font-medium">まだワインが登録されていません</p>
+            <p className="text-gray-400 text-sm">「ワインを追加」から最初の一本を登録しましょう</p>
+            <button
+              onClick={() => setShowAdd(true)}
+              className="mt-2 inline-flex items-center gap-1.5 bg-rose-800 text-white px-5 py-2.5 rounded-lg text-sm font-semibold hover:bg-rose-900 transition"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+              </svg>
+              ワインを追加
+            </button>
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="text-center py-16 text-gray-400">
+            「{search}」に一致するワインは見つかりませんでした
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {filtered.map((wine) => (
+              <WineCard
+                key={wine.id}
+                wine={wine}
+                onEdit={setEditTarget}
+                onDelete={deleteWine}
+              />
+            ))}
+          </div>
+        )}
       </main>
+
+      {/* Add modal */}
+      {showAdd && (
+        <Modal title="ワインを追加" onClose={() => setShowAdd(false)}>
+          <WineForm onSubmit={handleAdd} onCancel={() => setShowAdd(false)} />
+        </Modal>
+      )}
+
+      {/* Edit modal */}
+      {editTarget && (
+        <Modal title="ワインを編集" onClose={() => setEditTarget(null)}>
+          <WineForm
+            initial={editTarget}
+            onSubmit={handleEdit}
+            onCancel={() => setEditTarget(null)}
+          />
+        </Modal>
+      )}
     </div>
   );
 }
