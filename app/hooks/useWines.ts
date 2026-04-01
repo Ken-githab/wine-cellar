@@ -149,13 +149,29 @@ export function useWines(user: User | null) {
       const updated: Wine = { ...existing, ...data, updatedAt: now };
 
       if (isSupabaseConfigured && user) {
-        const { error } = await supabase
+        const { data: rows, error } = await supabase
           .from("wines")
-          .update({ ...toRow(updated, user.id), updated_at: now })
+          .update({
+            name: updated.name,
+            producer: updated.producer,
+            vintage: updated.vintage || null,
+            country: updated.country,
+            region: updated.region,
+            grape_variety: updated.grapeVariety,
+            price: updated.price || null,
+            url: updated.url || null,
+            use_coravin: updated.useCoravin,
+            photos: updated.photos,
+            tasting_note: updated.tastingNote,
+            updated_at: now,
+          })
           .eq("id", id)
-          .eq("user_id", user.id);
+          .eq("user_id", user.id)
+          .select();
         if (error) throw error;
-        const next = wines.map((w) => (w.id === id ? updated : w));
+        if (!rows || rows.length === 0) throw new Error("更新が保存されませんでした（0行更新）。Supabaseのスキーマを確認してください。");
+        const updatedFromDb = fromRow(rows[0]);
+        const next = wines.map((w) => (w.id === id ? updatedFromDb : w));
         setWines(next);
         saveCache(next);
       } else {
