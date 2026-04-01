@@ -59,9 +59,9 @@ self.addEventListener("fetch", (event) => {
             res.ok &&
             res.headers.get("content-type")?.includes("text/html")
           ) {
-            caches
-              .open(CACHE_NAME)
-              .then((cache) => cache.put(event.request, res.clone()));
+            // clone() must be called before the response body is consumed
+            const clone = res.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
           }
           return res;
         })

@@ -22,6 +22,10 @@ create table if not exists public.wines (
 create index if not exists wines_user_id_idx on public.wines(user_id);
 create index if not exists wines_created_at_idx on public.wines(created_at desc);
 
+-- テーブルアクセス権（authenticated ロールに必要）
+-- ※ これがないと PostgREST が 404 を返す
+grant select, insert, update, delete on public.wines to authenticated;
+
 -- Row Level Security（自分のデータだけ操作可能）
 alter table public.wines enable row level security;
 

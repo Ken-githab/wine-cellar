@@ -9,6 +9,7 @@ import { WineForm } from "@/app/components/WineForm";
 import { Modal } from "@/app/components/Modal";
 import { Wine, WineFormData } from "@/app/types/wine";
 import { isSupabaseConfigured } from "@/app/lib/supabase";
+import { Toast } from "@/app/components/Toast";
 
 type SortKey = "createdAt" | "vintage" | "rating" | "name";
 
@@ -23,6 +24,13 @@ export default function Home() {
   const [sortKey, setSortKey] = useState<SortKey>("createdAt");
   const [migrateBanner, setMigrateBanner] = useState<{ count: number } | null>(null);
   const [migrating, setMigrating] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: "error" | "success" } | null>(null);
+
+  const showError = (err: unknown) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const msg = (err as any)?.message ?? (err as any)?.details ?? JSON.stringify(err);
+    setToast({ message: `エラー: ${msg}`, type: "error" });
+  };
 
   // ログイン後に旧localStorageデータの移行を促す
   useEffect(() => {
@@ -64,14 +72,31 @@ export default function Home() {
   }, [wines, search, sortKey]);
 
   const handleAdd = async (data: WineFormData) => {
-    await addWine(data);
-    setShowAdd(false);
+    try {
+      await addWine(data);
+      setShowAdd(false);
+      setToast({ message: "ワインを登録しました", type: "success" });
+    } catch (err) {
+      showError(err);
+    }
   };
 
   const handleEdit = async (data: WineFormData) => {
-    if (editTarget) {
+    if (!editTarget) return;
+    try {
       await updateWine(editTarget.id, data);
       setEditTarget(null);
+      setToast({ message: "ワインを更新しました", type: "success" });
+    } catch (err) {
+      showError(err);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteWine(id);
+    } catch (err) {
+      showError(err);
     }
   };
 
@@ -243,7 +268,7 @@ export default function Home() {
                 key={wine.id}
                 wine={wine}
                 onEdit={setEditTarget}
-                onDelete={deleteWine}
+                onDelete={handleDelete}
               />
             ))}
           </div>
@@ -266,6 +291,15 @@ export default function Home() {
             onCancel={() => setEditTarget(null)}
           />
         </Modal>
+      )}
+
+      {/* Toast */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
       )}
     </div>
   );
