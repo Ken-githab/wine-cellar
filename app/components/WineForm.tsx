@@ -189,15 +189,10 @@ export function WineForm({ initial, onSubmit, onCancel }: WineFormProps) {
         <div>
           <label className={labelCls}>ヴィンテージ</label>
           <input
-            type="number"
-            min={1800}
-            max={new Date().getFullYear()}
             className={inputCls}
             value={form.vintage}
-            onChange={(e) =>
-              set("vintage", e.target.value ? Number(e.target.value) : "")
-            }
-            placeholder="例：2019"
+            onChange={(e) => set("vintage", e.target.value)}
+            placeholder="例：2019、NV、MV"
           />
         </div>
         <div>

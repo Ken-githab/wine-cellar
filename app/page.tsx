@@ -66,7 +66,7 @@ export default function Home() {
     );
     return [...result].sort((a, b) => {
       if (sortKey === "createdAt") return b.createdAt.localeCompare(a.createdAt);
-      if (sortKey === "vintage") return (Number(b.vintage) || 0) - (Number(a.vintage) || 0);
+      if (sortKey === "vintage") return (parseInt(b.vintage) || 0) - (parseInt(a.vintage) || 0);
       if (sortKey === "rating") return b.tastingNote.rating - a.tastingNote.rating;
       if (sortKey === "name") return a.name.localeCompare(b.name, "ja");
       return 0;

@@ -17,7 +17,7 @@ function fromRow(row: any): Wine {
     id: row.id,
     name: row.name,
     producer: row.producer ?? "",
-    vintage: row.vintage ?? "",
+    vintage: row.vintage != null ? String(row.vintage) : "",
     country: row.country ?? "",
     region: row.region ?? "",
     grapeVariety: row.grape_variety ?? "",

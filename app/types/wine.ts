@@ -59,7 +59,7 @@ export interface Wine {
   id: string;
   name: string;
   producer: string;
-  vintage: number | "";
+  vintage: string; // 例: "2019", "NV", "MV"
   country: string;
   region: string;
   grapeVariety: string;
