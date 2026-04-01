@@ -10,6 +10,7 @@ import { Modal } from "@/app/components/Modal";
 import { Wine, WineFormData } from "@/app/types/wine";
 import { isSupabaseConfigured } from "@/app/lib/supabase";
 import { Toast } from "@/app/components/Toast";
+import { WineDetailModal } from "@/app/components/WineDetailModal";
 
 type SortKey = "createdAt" | "vintage" | "rating" | "name";
 
@@ -20,6 +21,7 @@ export default function Home() {
 
   const [showAdd, setShowAdd] = useState(false);
   const [editTarget, setEditTarget] = useState<Wine | null>(null);
+  const [detailWine, setDetailWine] = useState<Wine | null>(null);
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("createdAt");
   const [migrateBanner, setMigrateBanner] = useState<{ count: number } | null>(null);
@@ -269,6 +271,7 @@ export default function Home() {
                 wine={wine}
                 onEdit={setEditTarget}
                 onDelete={handleDelete}
+                onViewDetail={setDetailWine}
               />
             ))}
           </div>
@@ -291,6 +294,15 @@ export default function Home() {
             onCancel={() => setEditTarget(null)}
           />
         </Modal>
+      )}
+
+      {/* Detail modal */}
+      {detailWine && (
+        <WineDetailModal
+          wine={detailWine}
+          onEdit={(w) => { setEditTarget(w); setDetailWine(null); }}
+          onClose={() => setDetailWine(null)}
+        />
       )}
 
       {/* Toast */}

@@ -21,6 +21,8 @@ function fromRow(row: any): Wine {
     country: row.country ?? "",
     region: row.region ?? "",
     grapeVariety: row.grape_variety ?? "",
+    price: row.price ?? "",
+    url: row.url ?? "",
     useCoravin: row.use_coravin ?? false,
     photos: row.photos ?? [],
     tastingNote: {
@@ -47,6 +49,8 @@ function toRow(wine: Wine, userId: string) {
     country: wine.country,
     region: wine.region,
     grape_variety: wine.grapeVariety,
+    price: wine.price || null,
+    url: wine.url || null,
     use_coravin: wine.useCoravin,
     photos: wine.photos,
     tasting_note: wine.tastingNote,

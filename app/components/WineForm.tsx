@@ -11,23 +11,6 @@ import {
 import { StarRating } from "./StarRating";
 import { PhotoUpload } from "./PhotoUpload";
 
-const GRAPE_OPTIONS = [
-  "カベルネ・ソーヴィニヨン",
-  "メルロー",
-  "ピノ・ノワール",
-  "シラー/シラーズ",
-  "グルナッシュ",
-  "サンジョヴェーゼ",
-  "テンプラニーリョ",
-  "ネッビオーロ",
-  "シャルドネ",
-  "ソーヴィニヨン・ブラン",
-  "リースリング",
-  "ピノ・グリ",
-  "ゲヴュルツトラミネール",
-  "ヴィオニエ",
-  "その他",
-];
 
 export const COUNTRIES: { flag: string; name: string }[] = [
   { flag: "🇫🇷", name: "フランス" },
@@ -70,6 +53,8 @@ const makeEmptyForm = (): WineFormData => ({
   country: "",
   region: "",
   grapeVariety: "",
+  price: "",
+  url: "",
   useCoravin: false,
   photos: [],
   tastingNote: {
@@ -135,6 +120,8 @@ export function WineForm({ initial, onSubmit, onCancel }: WineFormProps) {
           country: initial.country ?? "",
           region: initial.region,
           grapeVariety: initial.grapeVariety,
+          price: initial.price ?? "",
+          url: initial.url ?? "",
           useCoravin: initial.useCoravin,
           photos: initial.photos ?? [],
           tastingNote: {
@@ -239,20 +226,33 @@ export function WineForm({ initial, onSubmit, onCancel }: WineFormProps) {
         </div>
         <div>
           <label className={labelCls}>品種</label>
-          <select
+          <input
             className={inputCls}
             value={form.grapeVariety}
             onChange={(e) => set("grapeVariety", e.target.value)}
-          >
-            <option value="">選択してください</option>
-            {GRAPE_OPTIONS.map((g) => (
-              <option key={g} value={g}>
-                {g}
-              </option>
-            ))}
-          </select>
+            placeholder="例：カベルネ・ソーヴィニヨン、ピノ・ノワール"
+          />
         </div>
-        <div className="flex items-center gap-3 pt-5">
+        <div>
+          <label className={labelCls}>価格</label>
+          <input
+            className={inputCls}
+            value={form.price}
+            onChange={(e) => set("price", e.target.value)}
+            placeholder="例：¥3,500、€25"
+          />
+        </div>
+        <div className="md:col-span-2">
+          <label className={labelCls}>URL（購入先・参考ページ）</label>
+          <input
+            type="url"
+            className={inputCls}
+            value={form.url}
+            onChange={(e) => set("url", e.target.value)}
+            placeholder="https://..."
+          />
+        </div>
+        <div className="flex items-center gap-3 pt-1">
           <input
             id="coravin"
             type="checkbox"
