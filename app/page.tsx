@@ -12,7 +12,7 @@ import { isSupabaseConfigured } from "@/app/lib/supabase";
 import { Toast } from "@/app/components/Toast";
 import { WineDetailModal } from "@/app/components/WineDetailModal";
 
-type SortKey = "createdAt" | "vintage" | "rating" | "name";
+type SortKey = "createdAt" | "rating" | "vintage" | "price" | "goodValue";
 
 export default function Home() {
   const { user, loading: authLoading, signOut } = useAuth();
@@ -55,20 +55,23 @@ export default function Home() {
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
-    const result = wines.filter(
-      (w) =>
-        !q ||
+    const result = wines.filter((w) => {
+      const textOk = !q ||
         w.name.toLowerCase().includes(q) ||
         w.producer.toLowerCase().includes(q) ||
         w.region.toLowerCase().includes(q) ||
         w.grapeVariety.toLowerCase().includes(q) ||
-        w.country.toLowerCase().includes(q)
-    );
+        w.country.toLowerCase().includes(q);
+      const goodValueOk = sortKey !== "goodValue" || (w.goodValue ?? false);
+      return textOk && goodValueOk;
+    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const parsePrice = (p: any) => typeof p === "number" ? p : parseInt(String(p ?? "").replace(/[^\d]/g, "")) || 0;
     return [...result].sort((a, b) => {
       if (sortKey === "createdAt") return b.createdAt.localeCompare(a.createdAt);
-      if (sortKey === "vintage") return (parseInt(b.vintage) || 0) - (parseInt(a.vintage) || 0);
-      if (sortKey === "rating") return b.tastingNote.rating - a.tastingNote.rating;
-      if (sortKey === "name") return a.name.localeCompare(b.name, "ja");
+      if (sortKey === "rating" || sortKey === "goodValue") return b.tastingNote.rating - a.tastingNote.rating;
+      if (sortKey === "vintage") return (parseInt(String(b.vintage)) || 0) - (parseInt(String(a.vintage)) || 0);
+      if (sortKey === "price") return parsePrice(b.price) - parsePrice(a.price);
       return 0;
     });
   }, [wines, search, sortKey]);
@@ -196,16 +199,8 @@ export default function Home() {
         {isLoaded && wines.length > 0 && (
           <div className="flex gap-4 text-sm text-gray-600">
             <span>
-              <strong className="text-gray-900">{wines.length}</strong> 本登録済み
+              <strong className="text-gray-900">{wines.length}</strong> 本のワイン
             </span>
-            {wines.filter((w) => w.useCoravin).length > 0 && (
-              <span>
-                <strong className="text-gray-900">
-                  {wines.filter((w) => w.useCoravin).length}
-                </strong>{" "}
-                本コラヴァン使用
-              </span>
-            )}
           </div>
         )}
 
@@ -234,9 +229,10 @@ export default function Home() {
               onChange={(e) => setSortKey(e.target.value as SortKey)}
             >
               <option value="createdAt">登録順</option>
-              <option value="vintage">ヴィンテージ順</option>
               <option value="rating">評価順</option>
-              <option value="name">名前順</option>
+              <option value="vintage">ビンテージ順</option>
+              <option value="price">価格順</option>
+              <option value="goodValue">コスパ最高</option>
             </select>
           </div>
         )}

@@ -66,6 +66,7 @@ export interface Wine {
   price: string;  // 例: "¥3,500" や "€25"
   url: string;    // 購入先・参考URLなど
   useCoravin: boolean;
+  goodValue: boolean;
   photos: string[]; // base64 data URLs, max 4
   tastingNote: TastingNote;
   createdAt: string;

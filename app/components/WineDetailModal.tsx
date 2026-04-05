@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   Wine,
   DETAILED_RATING_LABELS,
@@ -22,7 +22,37 @@ interface Props {
 
 export function WineDetailModal({ wine, onEdit, onClose }: Props) {
   const [photoIndex, setPhotoIndex] = useState(0);
+  const touchStartX = useRef<number | null>(null);
+  const photoIndexRef = useRef(photoIndex);
+  const carouselRef = useRef<HTMLDivElement>(null);
   const photos = wine.photos ?? [];
+
+  useEffect(() => { photoIndexRef.current = photoIndex; }, [photoIndex]);
+
+  useEffect(() => {
+    const el = carouselRef.current;
+    if (!el || photos.length <= 1) return;
+    const onStart = (e: TouchEvent) => { touchStartX.current = e.touches[0].clientX; };
+    const onEnd = (e: TouchEvent) => {
+      if (touchStartX.current === null) return;
+      const diff = touchStartX.current - e.changedTouches[0].clientX;
+      touchStartX.current = null;
+      if (Math.abs(diff) > 40) {
+        const idx = photoIndexRef.current;
+        if (diff > 0 && idx < photos.length - 1) setPhotoIndex(idx + 1);
+        else if (diff < 0 && idx > 0) setPhotoIndex(idx - 1);
+      }
+    };
+    const onCancel = () => { touchStartX.current = null; };
+    el.addEventListener("touchstart", onStart, { passive: true });
+    el.addEventListener("touchend", onEnd, { passive: true });
+    el.addEventListener("touchcancel", onCancel, { passive: true });
+    return () => {
+      el.removeEventListener("touchstart", onStart);
+      el.removeEventListener("touchend", onEnd);
+      el.removeEventListener("touchcancel", onCancel);
+    };
+  }, [photos.length]);
   const flag = wine.country ? getFlag(wine.country) : "";
   const dr = { ...EMPTY_DETAILED_RATINGS, ...(wine.tastingNote.detailedRatings ?? {}) };
   const hasDr = Object.values(dr).some((v) => v > 0);
@@ -59,9 +89,9 @@ export function WineDetailModal({ wine, onEdit, onClose }: Props) {
                   {wine.vintage}
                 </span>
               )}
-              {wine.useCoravin && (
+              {wine.goodValue && (
                 <span className="text-xs font-medium bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full shrink-0">
-                  コラヴァン
+                  コスパ最高
                 </span>
               )}
             </div>
@@ -91,7 +121,11 @@ export function WineDetailModal({ wine, onEdit, onClose }: Props) {
 
         {/* 写真カルーセル */}
         {photos.length > 0 && (
-          <div className="relative bg-gray-900" style={{ height: 260 }}>
+          <div
+            ref={carouselRef}
+            className="relative bg-gray-900"
+            style={{ height: 260, touchAction: "pan-y" }}
+          >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={photos[photoIndex]}
@@ -177,7 +211,7 @@ export function WineDetailModal({ wine, onEdit, onClose }: Props) {
                           {[1, 2, 3, 4, 5].map((n) => (
                             <div
                               key={n}
-                              className={`flex-1 h-3 rounded-full ${n <= v ? "bg-rose-500" : "bg-gray-200"}`}
+                              className={`flex-1 h-3 rounded-full ${n <= v ? "bg-[#BE123C]" : "bg-gray-200"}`}
                             />
                           ))}
                         </div>

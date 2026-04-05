@@ -56,6 +56,7 @@ const makeEmptyForm = (): WineFormData => ({
   price: "",
   url: "",
   useCoravin: false,
+  goodValue: false,
   photos: [],
   tastingNote: {
     rating: 0,
@@ -123,6 +124,7 @@ export function WineForm({ initial, onSubmit, onCancel }: WineFormProps) {
           price: initial.price ?? "",
           url: initial.url ?? "",
           useCoravin: initial.useCoravin,
+          goodValue: initial.goodValue ?? false,
           photos: initial.photos ?? [],
           tastingNote: {
             ...initial.tastingNote,
@@ -249,14 +251,14 @@ export function WineForm({ initial, onSubmit, onCancel }: WineFormProps) {
         </div>
         <div className="flex items-center gap-3 pt-1">
           <input
-            id="coravin"
+            id="goodValue"
             type="checkbox"
             className="w-4 h-4 accent-rose-700 cursor-pointer"
-            checked={form.useCoravin}
-            onChange={(e) => set("useCoravin", e.target.checked)}
+            checked={form.goodValue}
+            onChange={(e) => set("goodValue", e.target.checked)}
           />
-          <label htmlFor="coravin" className="text-sm font-medium text-gray-700 cursor-pointer">
-            コラヴァン使用
+          <label htmlFor="goodValue" className="text-sm font-medium text-gray-700 cursor-pointer">
+            コスパ最高
           </label>
         </div>
       </div>

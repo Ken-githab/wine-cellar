@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Wine, DETAILED_RATING_LABELS, DetailedRatings, EMPTY_DETAILED_RATINGS } from "@/app/types/wine";
+import { useState, useRef, useEffect } from "react";
+import { Wine } from "@/app/types/wine";
 import { StarRating } from "./StarRating";
 import { COUNTRIES } from "./WineForm";
 
@@ -16,28 +16,40 @@ function getFlag(countryName: string): string {
   return COUNTRIES.find((c) => c.name === countryName)?.flag ?? "";
 }
 
-function DetailedRatingBar({ attrKey, value }: { attrKey: keyof DetailedRatings; value: number }) {
-  const { label, low, high } = DETAILED_RATING_LABELS[attrKey];
-  if (value === 0) return null;
-  return (
-    <div className="grid grid-cols-[3.5rem_1fr_2.5rem] items-center gap-1.5 text-xs">
-      <span className="text-gray-500 text-right">{label}</span>
-      <div className="flex gap-0.5">
-        {[1, 2, 3, 4, 5].map((v) => (
-          <div key={v} className={`flex-1 h-2 rounded-full ${v <= value ? "bg-rose-600" : "bg-gray-200"}`} />
-        ))}
-      </div>
-      <span className="text-gray-400 text-[10px]">{value <= 2 ? low : value >= 4 ? high : "中"}</span>
-    </div>
-  );
-}
-
 export function WineCard({ wine, onEdit, onDelete, onViewDetail }: WineCardProps) {
   const [photoIndex, setPhotoIndex] = useState(0);
+  const touchStartX = useRef<number | null>(null);
+  const photoIndexRef = useRef(photoIndex);
+  const containerRef = useRef<HTMLDivElement>(null);
   const photos = wine.photos ?? [];
+
+  useEffect(() => { photoIndexRef.current = photoIndex; }, [photoIndex]);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el || photos.length <= 1) return;
+    const onStart = (e: TouchEvent) => { touchStartX.current = e.touches[0].clientX; };
+    const onEnd = (e: TouchEvent) => {
+      if (touchStartX.current === null) return;
+      const diff = touchStartX.current - e.changedTouches[0].clientX;
+      touchStartX.current = null;
+      if (Math.abs(diff) > 40) {
+        const idx = photoIndexRef.current;
+        if (diff > 0 && idx < photos.length - 1) setPhotoIndex(idx + 1);
+        else if (diff < 0 && idx > 0) setPhotoIndex(idx - 1);
+      }
+    };
+    const onCancel = () => { touchStartX.current = null; };
+    el.addEventListener("touchstart", onStart, { passive: true });
+    el.addEventListener("touchend", onEnd, { passive: true });
+    el.addEventListener("touchcancel", onCancel, { passive: true });
+    return () => {
+      el.removeEventListener("touchstart", onStart);
+      el.removeEventListener("touchend", onEnd);
+      el.removeEventListener("touchcancel", onCancel);
+    };
+  }, [photos.length]);
   const flag = wine.country ? getFlag(wine.country) : "";
-  const detailedRatings = { ...EMPTY_DETAILED_RATINGS, ...(wine.tastingNote.detailedRatings ?? {}) };
-  const hasDetailedRatings = Object.values(detailedRatings).some((v) => v > 0);
 
   const handleDelete = () => {
     if (confirm(`「${wine.name}」を削除しますか？`)) {
@@ -50,7 +62,11 @@ export function WineCard({ wine, onEdit, onDelete, onViewDetail }: WineCardProps
 
       {/* Photo strip — クリックで詳細モーダルを開く */}
       {photos.length > 0 ? (
-        <div className="relative bg-gray-100 group" style={{ height: 180 }}>
+        <div
+          ref={containerRef}
+          className="relative bg-gray-100 group"
+          style={{ height: 180, touchAction: "pan-y" }}
+        >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={photos[photoIndex]}
@@ -58,11 +74,8 @@ export function WineCard({ wine, onEdit, onDelete, onViewDetail }: WineCardProps
             className="w-full h-full object-cover cursor-pointer"
             onClick={() => onViewDetail(wine)}
           />
-          {/* hover overlay */}
-          <div
-            className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center cursor-pointer"
-            onClick={() => onViewDetail(wine)}
-          >
+          {/* hover overlay — pointer-events-none でボタンのクリックを妨げない */}
+          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center pointer-events-none">
             <span className="opacity-0 group-hover:opacity-100 transition-opacity text-white text-xs font-medium bg-black/50 px-3 py-1 rounded-full">
               詳細を見る
             </span>
@@ -112,9 +125,9 @@ export function WineCard({ wine, onEdit, onDelete, onViewDetail }: WineCardProps
                   {wine.vintage}
                 </span>
               )}
-              {wine.useCoravin && (
+              {wine.goodValue && (
                 <span className="shrink-0 text-xs font-medium bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">
-                  コラヴァン
+                  コスパ最高
                 </span>
               )}
             </div>
@@ -159,28 +172,9 @@ export function WineCard({ wine, onEdit, onDelete, onViewDetail }: WineCardProps
         </div>
 
         {/* Tasting note */}
-        {(wine.tastingNote.rating > 0 || wine.tastingNote.memo || hasDetailedRatings) && (
-          <div className="border-t pt-3 space-y-2">
-            {wine.tastingNote.rating > 0 && (
-              <div className="flex items-center gap-2">
-                <StarRating value={wine.tastingNote.rating} readonly size="sm" />
-                {wine.tastingNote.date && (
-                  <span className="text-xs text-gray-400">{wine.tastingNote.date}</span>
-                )}
-              </div>
-            )}
-            {hasDetailedRatings && (
-              <div className="space-y-1.5">
-                {(Object.keys(DETAILED_RATING_LABELS) as (keyof DetailedRatings)[]).map((key) => (
-                  <DetailedRatingBar key={key} attrKey={key} value={detailedRatings[key]} />
-                ))}
-              </div>
-            )}
-            {wine.tastingNote.memo && (
-              <p className="text-sm text-gray-600 leading-relaxed line-clamp-2">
-                {wine.tastingNote.memo}
-              </p>
-            )}
+        {wine.tastingNote.rating > 0 && (
+          <div className="border-t pt-3">
+            <StarRating value={wine.tastingNote.rating} readonly size="sm" />
           </div>
         )}
       </div>

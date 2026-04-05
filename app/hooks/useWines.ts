@@ -30,6 +30,7 @@ function fromRow(row: any): Wine {
     price: row.price ?? "",
     url: row.url ?? "",
     useCoravin: row.use_coravin ?? false,
+    goodValue: row.good_value ?? false,
     photos: row.photos ?? [],
     tastingNote: {
       rating: tn.rating ?? 0,
@@ -58,6 +59,7 @@ function toRow(wine: Wine, userId: string) {
     price: wine.price || null,
     url: wine.url || null,
     use_coravin: wine.useCoravin,
+    good_value: wine.goodValue,
     photos: wine.photos,
     tasting_note: wine.tastingNote,
     created_at: wine.createdAt,
@@ -167,6 +169,7 @@ export function useWines(user: User | null) {
             price: updated.price || null,
             url: updated.url || null,
             use_coravin: updated.useCoravin,
+            good_value: updated.goodValue,
             photos: updated.photos,
             tasting_note: updated.tastingNote,
             updated_at: now,
