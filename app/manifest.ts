@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "マイワインコレクション管理アプリ",
     start_url: "/",
     display: "standalone",
-    background_color: "#6B21A8",
-    theme_color: "#6B21A8",
+    background_color: "#634B99",
+    theme_color: "#634B99",
     orientation: "portrait",
     icons: [
       {

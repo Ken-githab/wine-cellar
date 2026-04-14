@@ -83,8 +83,8 @@ export default function Home() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-[#FAF7FF] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-[#EDE9FE] border-t-[#6B21A8] rounded-full animate-spin" />
+      <div className="min-h-screen bg-[#FAF8FC] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-[#E8E2F4] border-t-[#634B99] rounded-full animate-spin" />
       </div>
     );
   }
@@ -92,24 +92,24 @@ export default function Home() {
   if (isSupabaseConfigured && !user) return <LoginForm />;
 
   return (
-    <div className="min-h-screen bg-[#FAF7FF]">
+    <div className="min-h-screen bg-[#FAF8FC]">
 
       {/* Header */}
       <header
-        className="sticky top-0 z-40 bg-[#FAF7FF]/95 backdrop-blur-sm border-b border-[#EDE9FE]"
+        className="sticky top-0 z-40 bg-[#FAF8FC]/95 backdrop-blur-sm border-b border-[#E8E2F4]"
         style={{ paddingTop: "env(safe-area-inset-top)" }}
       >
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between gap-3">
           <div className="flex-1 min-w-0">
-            <h1 className="text-lg font-bold text-[#1C0B35] leading-tight">🍇 Wine Cellar</h1>
+            <h1 className="text-lg font-bold text-[#1E0F38] leading-tight">🍇 Wine Cellar</h1>
             {isLoaded && wines.length > 0 && (
-              <p className="text-xs text-[#8B3DC8]">{wines.length} 本のワイン</p>
+              <p className="text-xs text-[#8E75B8]">{wines.length} 本のワイン</p>
             )}
           </div>
           <div className="flex items-center gap-2 shrink-0">
             {user && (
               <button onClick={() => signOut()}
-                className="w-9 h-9 rounded-full bg-[#EDE9FE] text-[#6B21A8] flex items-center justify-center hover:bg-[#DDD6FE] transition"
+                className="w-9 h-9 rounded-full bg-[#E8E2F4] text-[#634B99] flex items-center justify-center hover:bg-[#CABFE3] transition"
                 title="ログアウト">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -117,7 +117,7 @@ export default function Home() {
               </button>
             )}
             <button onClick={() => setShowAdd(true)}
-              className="w-10 h-10 rounded-full bg-[#6B21A8] text-white shadow-md flex items-center justify-center hover:bg-[#1C0B35] transition"
+              className="w-10 h-10 rounded-full bg-[#634B99] text-white shadow-md flex items-center justify-center hover:bg-[#1E0F38] transition"
               title="ワインを追加">
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
@@ -131,11 +131,11 @@ export default function Home() {
           <div className="max-w-lg mx-auto px-4 pb-3 space-y-2">
             {/* Search */}
             <div className="relative">
-              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8B3DC8]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8E75B8]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
               <input
-                className="w-full pl-9 pr-3 py-2 bg-[#EDE9FE] rounded-2xl text-sm text-[#1C0B35] placeholder:text-[#DDD6FE] focus:outline-none focus:ring-2 focus:ring-[#8B3DC8]/20"
+                className="w-full pl-9 pr-3 py-2 bg-[#E8E2F4] rounded-2xl text-sm text-[#1E0F38] placeholder:text-[#CABFE3] focus:outline-none focus:ring-2 focus:ring-[#8E75B8]/20"
                 placeholder="ワイン名・国・産地・品種で検索..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -145,7 +145,7 @@ export default function Home() {
             <div className="flex gap-2">
               <div className="relative flex-1">
                 <select
-                  className="w-full appearance-none bg-[#EDE9FE] text-[#6B21A8] rounded-2xl pl-3 pr-7 py-2 text-sm font-medium focus:outline-none"
+                  className="w-full appearance-none bg-[#E8E2F4] text-[#634B99] rounded-2xl pl-3 pr-7 py-2 text-sm font-medium focus:outline-none"
                   value={sortKey}
                   onChange={(e) => setSortKey(e.target.value as SortKey)}
                 >
@@ -154,14 +154,14 @@ export default function Home() {
                   <option value="vintage">ビンテージ順</option>
                   <option value="price">価格順</option>
                 </select>
-                <svg className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-[#6B21A8] pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-[#634B99] pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
                 </svg>
               </div>
               <button
                 onClick={() => setFilterGoodValue(!filterGoodValue)}
                 className={`shrink-0 px-4 py-2 rounded-2xl border-2 text-sm font-medium transition ${
-                  filterGoodValue ? "bg-[#6B21A8] text-white border-[#6B21A8]" : "bg-[#FAF7FF] border-[#EDE9FE] text-[#8B3DC8]"
+                  filterGoodValue ? "bg-[#634B99] text-white border-[#634B99]" : "bg-[#FAF8FC] border-[#E8E2F4] text-[#8E75B8]"
                 }`}
               >
                 コスパ最高
@@ -204,28 +204,28 @@ export default function Home() {
       >
         {!isLoaded ? (
           <div className="flex items-center justify-center py-20">
-            <div className="w-8 h-8 border-2 border-[#EDE9FE] border-t-[#6B21A8] rounded-full animate-spin" />
+            <div className="w-8 h-8 border-2 border-[#E8E2F4] border-t-[#634B99] rounded-full animate-spin" />
           </div>
         ) : wines.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 space-y-4">
-            <div className="w-20 h-20 bg-[#EDE9FE] rounded-full flex items-center justify-center text-4xl">🍾</div>
+            <div className="w-20 h-20 bg-[#E8E2F4] rounded-full flex items-center justify-center text-4xl">🍾</div>
             <div className="text-center space-y-1">
-              <p className="text-[#1C0B35] font-semibold text-lg">まだワインがありません</p>
-              <p className="text-[#8B3DC8] text-sm">最初の一本を登録しましょう</p>
+              <p className="text-[#1E0F38] font-semibold text-lg">まだワインがありません</p>
+              <p className="text-[#8E75B8] text-sm">最初の一本を登録しましょう</p>
             </div>
             <button onClick={() => setShowAdd(true)}
-              className="mt-2 px-6 py-3 bg-[#6B21A8] text-white rounded-3xl text-sm font-semibold shadow-[0_4px_16px_rgba(107,33,168,0.3)] hover:bg-[#1C0B35] transition">
+              className="mt-2 px-6 py-3 bg-[#634B99] text-white rounded-3xl text-sm font-semibold shadow-[0_4px_16px_rgba(99,75,153,0.3)] hover:bg-[#1E0F38] transition">
               ワインを追加
             </button>
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 space-y-3">
-            <div className="w-16 h-16 bg-[#EDE9FE] rounded-full flex items-center justify-center text-2xl">🔍</div>
-            <p className="text-[#8B3DC8] text-sm text-center">
+            <div className="w-16 h-16 bg-[#E8E2F4] rounded-full flex items-center justify-center text-2xl">🔍</div>
+            <p className="text-[#8E75B8] text-sm text-center">
               {filterGoodValue ? "コスパ最高のワインがありません" : `「${search}」に一致するワインは見つかりませんでした`}
             </p>
             <button onClick={() => { setSearch(""); setFilterGoodValue(false); }}
-              className="text-[#6B21A8] text-sm underline underline-offset-2">
+              className="text-[#634B99] text-sm underline underline-offset-2">
               すべて表示
             </button>
           </div>

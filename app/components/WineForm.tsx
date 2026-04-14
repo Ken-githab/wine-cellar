@@ -73,9 +73,9 @@ function DetailedRatingRow({
   const { label, low, high } = DETAILED_RATING_LABELS[attrKey];
   return (
     <div className="flex items-center justify-between gap-3">
-      <span className="text-sm text-[#6B21A8] font-medium w-16 shrink-0">{label}</span>
+      <span className="text-sm text-[#634B99] font-medium w-16 shrink-0">{label}</span>
       <div className="flex items-center gap-1.5 flex-1">
-        <span className="text-xs text-[#DDD6FE] w-8 text-right shrink-0">{low}</span>
+        <span className="text-xs text-[#CABFE3] w-8 text-right shrink-0">{low}</span>
         <div className="flex gap-1 flex-1 justify-center">
           {[1, 2, 3, 4, 5].map((v) => (
             <button
@@ -83,14 +83,14 @@ function DetailedRatingRow({
               type="button"
               onClick={() => onChange(value === v ? 0 : v)}
               className={`w-7 h-7 rounded-full border-2 transition active:scale-95 ${
-                v <= value ? "bg-[#8B3DC8] border-[#8B3DC8]" : "border-[#EDE9FE] hover:border-[#8B3DC8]"
+                v <= value ? "bg-[#8E75B8] border-[#8E75B8]" : "border-[#E8E2F4] hover:border-[#8E75B8]"
               }`}
             />
           ))}
         </div>
-        <span className="text-xs text-[#DDD6FE] w-8 shrink-0">{high}</span>
+        <span className="text-xs text-[#CABFE3] w-8 shrink-0">{high}</span>
       </div>
-      <span className="text-xs text-[#8B3DC8] font-semibold w-4 text-center shrink-0">{value > 0 ? value : ""}</span>
+      <span className="text-xs text-[#8E75B8] font-semibold w-4 text-center shrink-0">{value > 0 ? value : ""}</span>
     </div>
   );
 }
@@ -123,8 +123,8 @@ export function WineForm({ initial, onSubmit, onCancel }: WineFormProps) {
   const setDetailedRating = (key: keyof DetailedRatings, value: number) =>
     setForm((f) => ({ ...f, tastingNote: { ...f.tastingNote, detailedRatings: { ...f.tastingNote.detailedRatings, [key]: value } } }));
 
-  const inputCls = "w-full bg-white border-2 border-[#EDE9FE] rounded-2xl px-4 py-3 text-sm text-[#1C0B35] placeholder:text-[#DDD6FE] focus:outline-none focus:border-[#8B3DC8] transition-colors";
-  const labelCls = "block text-xs font-semibold text-[#6B21A8] mb-1.5 uppercase tracking-wide";
+  const inputCls = "w-full bg-white border-2 border-[#E8E2F4] rounded-2xl px-4 py-3 text-sm text-[#1E0F38] placeholder:text-[#CABFE3] focus:outline-none focus:border-[#8E75B8] transition-colors";
+  const labelCls = "block text-xs font-semibold text-[#634B99] mb-1.5 uppercase tracking-wide";
 
   return (
     <form onSubmit={(e) => { e.preventDefault(); onSubmit(form); }} className="space-y-5">
@@ -191,8 +191,8 @@ export function WineForm({ initial, onSubmit, onCancel }: WineFormProps) {
               onClick={() => set("goodValue", !form.goodValue)}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl border-2 text-sm font-medium transition active:scale-95 ${
                 form.goodValue
-                  ? "bg-[#6B21A8] text-white border-[#6B21A8]"
-                  : "bg-white border-[#EDE9FE] text-[#8B3DC8]"
+                  ? "bg-[#634B99] text-white border-[#634B99]"
+                  : "bg-white border-[#E8E2F4] text-[#8E75B8]"
               }`}
             >
               <svg className="w-4 h-4" fill={form.goodValue ? "currentColor" : "none"} viewBox="0 0 24 24" stroke="currentColor">
@@ -205,24 +205,24 @@ export function WineForm({ initial, onSubmit, onCancel }: WineFormProps) {
       </div>
 
       {/* 写真 */}
-      <div className="border-t border-[#EDE9FE] pt-5">
+      <div className="border-t border-[#E8E2F4] pt-5">
         <label className={labelCls}>写真（最大4枚）</label>
         <PhotoUpload photos={form.photos} onChange={(photos) => set("photos", photos)} />
       </div>
 
       {/* テイスティングノート */}
-      <div className="border-t border-[#EDE9FE] pt-5 space-y-5">
-        <h3 className="font-semibold text-[#1C0B35]">テイスティングノート</h3>
+      <div className="border-t border-[#E8E2F4] pt-5 space-y-5">
+        <h3 className="font-semibold text-[#1E0F38]">テイスティングノート</h3>
 
-        <div className="bg-[#FAF7FF] rounded-3xl p-4 space-y-3">
+        <div className="bg-[#FAF8FC] rounded-3xl p-4 space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-[#6B21A8]">総合評価</span>
+            <span className="text-sm font-medium text-[#634B99]">総合評価</span>
             <StarRating value={form.tastingNote.rating} onChange={(v) => setNote("rating", v)} size="md" />
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-[#6B21A8]">テイスティング日</span>
+            <span className="text-sm font-medium text-[#634B99]">テイスティング日</span>
             <input type="date"
-              className="bg-white border-2 border-[#EDE9FE] rounded-xl px-3 py-1.5 text-sm text-[#1C0B35] focus:outline-none focus:border-[#8B3DC8] transition-colors"
+              className="bg-white border-2 border-[#E8E2F4] rounded-xl px-3 py-1.5 text-sm text-[#1E0F38] focus:outline-none focus:border-[#8E75B8] transition-colors"
               value={form.tastingNote.date}
               onChange={(e) => setNote("date", e.target.value)} />
           </div>
@@ -231,7 +231,7 @@ export function WineForm({ initial, onSubmit, onCancel }: WineFormProps) {
         {/* 詳細評価 */}
         <div>
           <label className={labelCls}>詳細評価</label>
-          <div className="bg-[#FAF7FF] rounded-3xl p-4 space-y-4">
+          <div className="bg-[#FAF8FC] rounded-3xl p-4 space-y-4">
             {(Object.keys(DETAILED_RATING_LABELS) as (keyof DetailedRatings)[]).map((key) => (
               <DetailedRatingRow
                 key={key}
@@ -256,11 +256,11 @@ export function WineForm({ initial, onSubmit, onCancel }: WineFormProps) {
       {/* Actions */}
       <div className="pt-2 space-y-3">
         <button type="submit"
-          className="w-full py-4 bg-[#6B21A8] text-white rounded-3xl font-semibold text-sm shadow-[0_4px_16px_rgba(107,33,168,0.3)] hover:bg-[#1C0B35] transition active:scale-[0.98]">
+          className="w-full py-4 bg-[#634B99] text-white rounded-3xl font-semibold text-sm shadow-[0_4px_16px_rgba(99,75,153,0.3)] hover:bg-[#1E0F38] transition active:scale-[0.98]">
           {initial ? "更新する" : "登録する"}
         </button>
         <button type="button" onClick={onCancel}
-          className="w-full py-3.5 bg-[#EDE9FE] text-[#6B21A8] rounded-3xl font-semibold text-sm hover:bg-[#DDD6FE] transition">
+          className="w-full py-3.5 bg-[#E8E2F4] text-[#634B99] rounded-3xl font-semibold text-sm hover:bg-[#CABFE3] transition">
           キャンセル
         </button>
       </div>

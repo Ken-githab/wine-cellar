@@ -1,12 +1,12 @@
 @import "tailwindcss";
 
 :root {
-  --c-dark:   #1C0B35;
-  --c-main:   #6B21A8;
-  --c-medium: #8B3DC8;
-  --c-light:  #DDD6FE;
-  --c-pale:   #EDE9FE;
-  --c-bg:     #FAF7FF;
+  --c-dark:   #1E0F38;
+  --c-main:   #634B99;
+  --c-medium: #8E75B8;
+  --c-light:  #CABFE3;
+  --c-pale:   #E8E2F4;
+  --c-bg:     #FAF8FC;
   --c-gold:   #C9A96E;
 }
 

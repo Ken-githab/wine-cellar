@@ -79,7 +79,7 @@ export function WineCard({ wine, onDelete, onViewDetail }: WineCardProps) {
   return (
     <>
       <div
-        className="bg-white rounded-3xl overflow-hidden shadow-[0_2px_12px_rgba(28,11,53,0.08)] active:scale-[0.98] transition-transform cursor-pointer select-none"
+        className="bg-white rounded-3xl overflow-hidden shadow-[0_2px_12px_rgba(30,15,56,0.07)] active:scale-[0.98] transition-transform cursor-pointer select-none"
         onClick={handleCardClick}
         onPointerDown={handlePressStart}
         onPointerUp={handlePressEnd}
@@ -120,20 +120,20 @@ export function WineCard({ wine, onDelete, onViewDetail }: WineCardProps) {
         <div className="p-4 space-y-2">
           {/* Title + vintage */}
           <div className="flex items-start gap-2">
-            <h3 className="flex-1 font-semibold text-[#1C0B35] text-base leading-snug truncate">{wine.name}</h3>
+            <h3 className="flex-1 font-semibold text-[#1E0F38] text-base leading-snug truncate">{wine.name}</h3>
             {wine.vintage && (
-              <span className="shrink-0 text-xs font-semibold bg-[#EDE9FE] text-[#6B21A8] px-2 py-0.5 rounded-full">{wine.vintage}</span>
+              <span className="shrink-0 text-xs font-semibold bg-[#E8E2F4] text-[#634B99] px-2 py-0.5 rounded-full">{wine.vintage}</span>
             )}
           </div>
 
           {/* Country / Price */}
           {(wine.country || wine.region || wine.price) && (
             <div className="flex items-center justify-between text-sm gap-2">
-              <span className="text-[#8B3DC8] truncate">
+              <span className="text-[#8E75B8] truncate">
                 {flag && <span className="mr-1">{flag}</span>}
                 {wine.country}{wine.country && wine.region ? " / " : ""}{wine.region}
               </span>
-              {wine.price && <span className="shrink-0 font-medium text-[#1C0B35]">{formatPrice(wine.price)}</span>}
+              {wine.price && <span className="shrink-0 font-medium text-[#1E0F38]">{formatPrice(wine.price)}</span>}
             </div>
           )}
 
@@ -141,7 +141,7 @@ export function WineCard({ wine, onDelete, onViewDetail }: WineCardProps) {
           {(wine.grapeVariety || wine.goodValue) && (
             <div className="flex flex-wrap gap-1.5">
               {wine.grapeVariety && (
-                <span className="text-xs bg-[#EDE9FE] text-[#6B21A8] px-2 py-0.5 rounded-full">{wine.grapeVariety}</span>
+                <span className="text-xs bg-[#E8E2F4] text-[#634B99] px-2 py-0.5 rounded-full">{wine.grapeVariety}</span>
               )}
               {wine.goodValue && (
                 <span className="text-xs bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full">コスパ最高</span>
@@ -162,13 +162,13 @@ export function WineCard({ wine, onDelete, onViewDetail }: WineCardProps) {
           onClick={() => setShowDeleteConfirm(false)}>
           <div className="w-full bg-white rounded-t-3xl p-6 space-y-3 max-w-lg mx-auto"
             onClick={(e) => e.stopPropagation()}>
-            <p className="font-semibold text-[#1C0B35] text-center text-base">「{wine.name}」を削除しますか？</p>
+            <p className="font-semibold text-[#1E0F38] text-center text-base">「{wine.name}」を削除しますか？</p>
             <button onClick={() => { onDelete(wine.id); setShowDeleteConfirm(false); }}
               className="w-full py-3.5 bg-red-600 text-white rounded-2xl font-semibold text-sm">
               削除する
             </button>
             <button onClick={() => setShowDeleteConfirm(false)}
-              className="w-full py-3.5 bg-[#EDE9FE] text-[#6B21A8] rounded-2xl font-semibold text-sm">
+              className="w-full py-3.5 bg-[#E8E2F4] text-[#634B99] rounded-2xl font-semibold text-sm">
               キャンセル
             </button>
           </div>
