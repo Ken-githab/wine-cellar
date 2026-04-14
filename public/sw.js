@@ -1,4 +1,4 @@
-const CACHE_NAME = "wine-cellar-v1";
+const CACHE_NAME = "wine-cellar-v2";
 
 // Next.js static assets to cache aggressively
 const isStaticAsset = (url) =>
@@ -6,8 +6,8 @@ const isStaticAsset = (url) =>
   url.pathname === "/icon.svg" ||
   url.pathname === "/manifest.webmanifest";
 
-self.addEventListener("install", () => {
-  self.skipWaiting();
+self.addEventListener("install", (event) => {
+  event.waitUntil(self.skipWaiting());
 });
 
 self.addEventListener("activate", (event) => {
