@@ -2,15 +2,10 @@
 
 import { useState } from "react";
 import {
-  Wine,
-  WineFormData,
-  EMPTY_DETAILED_RATINGS,
-  DETAILED_RATING_LABELS,
-  DetailedRatings,
+  Wine, WineFormData, EMPTY_DETAILED_RATINGS, DETAILED_RATING_LABELS, DetailedRatings,
 } from "@/app/types/wine";
 import { StarRating } from "./StarRating";
 import { PhotoUpload } from "./PhotoUpload";
-
 
 export const COUNTRIES: { flag: string; name: string }[] = [
   { flag: "🇫🇷", name: "フランス" },
@@ -73,231 +68,170 @@ interface WineFormProps {
 }
 
 function DetailedRatingRow({
-  attrKey,
-  value,
-  onChange,
-}: {
-  attrKey: keyof DetailedRatings;
-  value: number;
-  onChange: (v: number) => void;
-}) {
+  attrKey, value, onChange,
+}: { attrKey: keyof DetailedRatings; value: number; onChange: (v: number) => void; }) {
   const { label, low, high } = DETAILED_RATING_LABELS[attrKey];
   return (
-    <div className="grid grid-cols-[4rem_1fr_auto] items-center gap-2 text-sm">
-      <span className="text-gray-700 font-medium text-right">{label}</span>
-      <div className="flex items-center gap-1.5">
-        <span className="text-xs text-gray-400 shrink-0 w-10 text-right">{low}</span>
-        <div className="flex gap-1">
+    <div className="flex items-center justify-between gap-3">
+      <span className="text-sm text-[#6B21A8] font-medium w-16 shrink-0">{label}</span>
+      <div className="flex items-center gap-1.5 flex-1">
+        <span className="text-xs text-[#DDD6FE] w-8 text-right shrink-0">{low}</span>
+        <div className="flex gap-1 flex-1 justify-center">
           {[1, 2, 3, 4, 5].map((v) => (
             <button
               key={v}
               type="button"
               onClick={() => onChange(value === v ? 0 : v)}
-              className={`w-6 h-6 rounded-full border-2 transition ${
-                v <= value
-                  ? "bg-rose-700 border-rose-700"
-                  : "border-gray-300 hover:border-rose-400"
+              className={`w-7 h-7 rounded-full border-2 transition active:scale-95 ${
+                v <= value ? "bg-[#8B3DC8] border-[#8B3DC8]" : "border-[#EDE9FE] hover:border-[#8B3DC8]"
               }`}
-              aria-label={`${label} ${v}`}
             />
           ))}
         </div>
-        <span className="text-xs text-gray-400 shrink-0 w-8">{high}</span>
+        <span className="text-xs text-[#DDD6FE] w-8 shrink-0">{high}</span>
       </div>
-      <span className="text-xs text-rose-700 font-semibold w-4 text-center">
-        {value > 0 ? value : ""}
-      </span>
+      <span className="text-xs text-[#8B3DC8] font-semibold w-4 text-center shrink-0">{value > 0 ? value : ""}</span>
     </div>
   );
 }
 
 export function WineForm({ initial, onSubmit, onCancel }: WineFormProps) {
   const [form, setForm] = useState<WineFormData>(() =>
-    initial
-      ? {
-          name: initial.name,
-          producer: initial.producer,
-          vintage: initial.vintage,
-          country: initial.country ?? "",
-          region: initial.region,
-          grapeVariety: initial.grapeVariety,
-          price: initial.price ?? "",
-          url: initial.url ?? "",
-          useCoravin: initial.useCoravin,
-          goodValue: initial.goodValue ?? false,
-          photos: initial.photos ?? [],
-          tastingNote: {
-            ...initial.tastingNote,
-            detailedRatings: {
-              ...EMPTY_DETAILED_RATINGS,
-              ...(initial.tastingNote.detailedRatings ?? {}),
-            },
-          },
-        }
-      : makeEmptyForm()
+    initial ? {
+      name: initial.name,
+      producer: initial.producer,
+      vintage: initial.vintage,
+      country: initial.country ?? "",
+      region: initial.region,
+      grapeVariety: initial.grapeVariety,
+      price: initial.price ?? "",
+      url: initial.url ?? "",
+      useCoravin: initial.useCoravin,
+      goodValue: initial.goodValue ?? false,
+      photos: initial.photos ?? [],
+      tastingNote: {
+        ...initial.tastingNote,
+        detailedRatings: { ...EMPTY_DETAILED_RATINGS, ...(initial.tastingNote.detailedRatings ?? {}) },
+      },
+    } : makeEmptyForm()
   );
 
   const set = <K extends keyof WineFormData>(key: K, value: WineFormData[K]) =>
     setForm((f) => ({ ...f, [key]: value }));
-
-  const setNote = <K extends keyof WineFormData["tastingNote"]>(
-    key: K,
-    value: WineFormData["tastingNote"][K]
-  ) => setForm((f) => ({ ...f, tastingNote: { ...f.tastingNote, [key]: value } }));
-
+  const setNote = <K extends keyof WineFormData["tastingNote"]>(key: K, value: WineFormData["tastingNote"][K]) =>
+    setForm((f) => ({ ...f, tastingNote: { ...f.tastingNote, [key]: value } }));
   const setDetailedRating = (key: keyof DetailedRatings, value: number) =>
-    setForm((f) => ({
-      ...f,
-      tastingNote: {
-        ...f.tastingNote,
-        detailedRatings: { ...f.tastingNote.detailedRatings, [key]: value },
-      },
-    }));
+    setForm((f) => ({ ...f, tastingNote: { ...f.tastingNote, detailedRatings: { ...f.tastingNote.detailedRatings, [key]: value } } }));
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit(form);
-  };
-
-  const labelCls = "block text-sm font-medium text-gray-700 mb-1";
-  const inputCls =
-    "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-300 focus:border-transparent transition";
+  const inputCls = "w-full bg-white border-2 border-[#EDE9FE] rounded-2xl px-4 py-3 text-sm text-[#1C0B35] placeholder:text-[#DDD6FE] focus:outline-none focus:border-[#8B3DC8] transition-colors";
+  const labelCls = "block text-xs font-semibold text-[#6B21A8] mb-1.5 uppercase tracking-wide";
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
+    <form onSubmit={(e) => { e.preventDefault(); onSubmit(form); }} className="space-y-5">
+
       {/* 基本情報 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="md:col-span-2">
-          <label className={labelCls}>
-            ワイン名 <span className="text-red-500">*</span>
-          </label>
-          <input
-            required
-            className={inputCls}
-            value={form.name}
-            onChange={(e) => set("name", e.target.value)}
-            placeholder="例：シャトー・マルゴー"
-          />
+      <div className="space-y-4">
+        <div>
+          <label className={labelCls}>ワイン名 <span className="text-red-500">*</span></label>
+          <input required className={inputCls} value={form.name}
+            onChange={(e) => set("name", e.target.value)} placeholder="例：シャトー・マルゴー" />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className={labelCls}>生産者</label>
+            <input className={inputCls} value={form.producer}
+              onChange={(e) => set("producer", e.target.value)} placeholder="生産者名" />
+          </div>
+          <div>
+            <label className={labelCls}>ヴィンテージ</label>
+            <input className={inputCls} value={form.vintage}
+              onChange={(e) => set("vintage", e.target.value)} placeholder="例：2019、NV" />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className={labelCls}>国</label>
+            <select className={inputCls} value={form.country} onChange={(e) => set("country", e.target.value)}>
+              <option value="">選択</option>
+              {COUNTRIES.map((c) => (
+                <option key={c.name} value={c.name}>{c.flag} {c.name}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className={labelCls}>産地・地域</label>
+            <input className={inputCls} value={form.region}
+              onChange={(e) => set("region", e.target.value)} placeholder="例：ボルドー" />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className={labelCls}>品種</label>
+            <input className={inputCls} value={form.grapeVariety}
+              onChange={(e) => set("grapeVariety", e.target.value)} placeholder="例：ピノ・ノワール" />
+          </div>
+          <div>
+            <label className={labelCls}>価格</label>
+            <input className={inputCls} value={form.price}
+              onChange={(e) => set("price", e.target.value)} placeholder="例：¥3,500" />
+          </div>
         </div>
         <div>
-          <label className={labelCls}>生産者</label>
-          <input
-            className={inputCls}
-            value={form.producer}
-            onChange={(e) => set("producer", e.target.value)}
-            placeholder="例：シャトー・マルゴー"
-          />
+          <label className={labelCls}>URL</label>
+          <input type="url" className={inputCls} value={form.url}
+            onChange={(e) => set("url", e.target.value)} placeholder="https://..." />
         </div>
+
+        {/* コスパ最高 toggle */}
         <div>
-          <label className={labelCls}>ヴィンテージ</label>
-          <input
-            className={inputCls}
-            value={form.vintage}
-            onChange={(e) => set("vintage", e.target.value)}
-            placeholder="例：2019、NV、MV"
-          />
-        </div>
-        <div>
-          <label className={labelCls}>国</label>
-          <select
-            className={inputCls}
-            value={form.country}
-            onChange={(e) => set("country", e.target.value)}
-          >
-            <option value="">選択してください</option>
-            {COUNTRIES.map((c) => (
-              <option key={c.name} value={c.name}>
-                {c.flag} {c.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className={labelCls}>産地・地域</label>
-          <input
-            className={inputCls}
-            value={form.region}
-            onChange={(e) => set("region", e.target.value)}
-            placeholder="例：ボルドー、ブルゴーニュ"
-          />
-        </div>
-        <div>
-          <label className={labelCls}>品種</label>
-          <input
-            className={inputCls}
-            value={form.grapeVariety}
-            onChange={(e) => set("grapeVariety", e.target.value)}
-            placeholder="例：カベルネ・ソーヴィニヨン、ピノ・ノワール"
-          />
-        </div>
-        <div>
-          <label className={labelCls}>価格</label>
-          <input
-            className={inputCls}
-            value={form.price}
-            onChange={(e) => set("price", e.target.value)}
-            placeholder="例：¥3,500、€25"
-          />
-        </div>
-        <div className="md:col-span-2">
-          <label className={labelCls}>URL（購入先・参考ページ）</label>
-          <input
-            type="url"
-            className={inputCls}
-            value={form.url}
-            onChange={(e) => set("url", e.target.value)}
-            placeholder="https://..."
-          />
-        </div>
-        <div className="flex items-center gap-3 pt-1">
-          <input
-            id="goodValue"
-            type="checkbox"
-            className="w-4 h-4 accent-rose-700 cursor-pointer"
-            checked={form.goodValue}
-            onChange={(e) => set("goodValue", e.target.checked)}
-          />
-          <label htmlFor="goodValue" className="text-sm font-medium text-gray-700 cursor-pointer">
-            コスパ最高
-          </label>
+          <label className={labelCls}>タグ</label>
+          <div className="flex gap-3 flex-wrap">
+            <button
+              type="button"
+              onClick={() => set("goodValue", !form.goodValue)}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl border-2 text-sm font-medium transition active:scale-95 ${
+                form.goodValue
+                  ? "bg-[#6B21A8] text-white border-[#6B21A8]"
+                  : "bg-white border-[#EDE9FE] text-[#8B3DC8]"
+              }`}
+            >
+              <svg className="w-4 h-4" fill={form.goodValue ? "currentColor" : "none"} viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+              </svg>
+              コスパ最高
+            </button>
+          </div>
         </div>
       </div>
 
       {/* 写真 */}
-      <div className="border-t pt-4">
+      <div className="border-t border-[#EDE9FE] pt-5">
         <label className={labelCls}>写真（最大4枚）</label>
-        <PhotoUpload
-          photos={form.photos}
-          onChange={(photos) => set("photos", photos)}
-        />
+        <PhotoUpload photos={form.photos} onChange={(photos) => set("photos", photos)} />
       </div>
 
       {/* テイスティングノート */}
-      <div className="border-t pt-4 space-y-4">
-        <h3 className="font-semibold text-gray-800">テイスティングノート</h3>
+      <div className="border-t border-[#EDE9FE] pt-5 space-y-5">
+        <h3 className="font-semibold text-[#1C0B35]">テイスティングノート</h3>
 
-        <div>
-          <label className={labelCls}>総合評価</label>
-          <StarRating
-            value={form.tastingNote.rating}
-            onChange={(v) => setNote("rating", v)}
-          />
-        </div>
-
-        <div>
-          <label className={labelCls}>テイスティング日</label>
-          <input
-            type="date"
-            className={`${inputCls} w-auto`}
-            value={form.tastingNote.date}
-            onChange={(e) => setNote("date", e.target.value)}
-          />
+        <div className="bg-[#FAF7FF] rounded-3xl p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-[#6B21A8]">総合評価</span>
+            <StarRating value={form.tastingNote.rating} onChange={(v) => setNote("rating", v)} size="md" />
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-[#6B21A8]">テイスティング日</span>
+            <input type="date"
+              className="bg-white border-2 border-[#EDE9FE] rounded-xl px-3 py-1.5 text-sm text-[#1C0B35] focus:outline-none focus:border-[#8B3DC8] transition-colors"
+              value={form.tastingNote.date}
+              onChange={(e) => setNote("date", e.target.value)} />
+          </div>
         </div>
 
         {/* 詳細評価 */}
         <div>
-          <label className={`${labelCls} mb-3`}>詳細評価</label>
-          <div className="space-y-3 bg-gray-50 rounded-xl p-4">
+          <label className={labelCls}>詳細評価</label>
+          <div className="bg-[#FAF7FF] rounded-3xl p-4 space-y-4">
             {(Object.keys(DETAILED_RATING_LABELS) as (keyof DetailedRatings)[]).map((key) => (
               <DetailedRatingRow
                 key={key}
@@ -311,30 +245,23 @@ export function WineForm({ initial, onSubmit, onCancel }: WineFormProps) {
 
         <div>
           <label className={labelCls}>メモ</label>
-          <textarea
-            rows={4}
+          <textarea rows={4}
             className={`${inputCls} resize-none`}
             value={form.tastingNote.memo}
             onChange={(e) => setNote("memo", e.target.value)}
-            placeholder="香り、味わい、余韻など..."
-          />
+            placeholder="香り、味わい、余韻など..." />
         </div>
       </div>
 
       {/* Actions */}
-      <div className="flex gap-3 justify-end pt-2">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="px-4 py-2 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
-        >
-          キャンセル
-        </button>
-        <button
-          type="submit"
-          className="px-5 py-2 rounded-lg bg-rose-800 text-white text-sm font-medium hover:bg-rose-900 transition"
-        >
+      <div className="pt-2 space-y-3">
+        <button type="submit"
+          className="w-full py-4 bg-[#6B21A8] text-white rounded-3xl font-semibold text-sm shadow-[0_4px_16px_rgba(107,33,168,0.3)] hover:bg-[#1C0B35] transition active:scale-[0.98]">
           {initial ? "更新する" : "登録する"}
+        </button>
+        <button type="button" onClick={onCancel}
+          className="w-full py-3.5 bg-[#EDE9FE] text-[#6B21A8] rounded-3xl font-semibold text-sm hover:bg-[#DDD6FE] transition">
+          キャンセル
         </button>
       </div>
     </form>
