@@ -13,7 +13,7 @@ export default function Icon() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#881337",
+          background: "#634B99",
           borderRadius: 102,
         }}
       >
@@ -31,7 +31,7 @@ export default function Icon() {
           />
           <path
             d="M 30,35 L 70,35 C 74,50 60,63 54,65 L 46,65 C 40,63 26,50 30,35 Z"
-            fill="#dc2626"
+            fill="#C9A96E"
             opacity="0.85"
           />
         </svg>
