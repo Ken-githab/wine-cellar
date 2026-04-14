@@ -42,30 +42,30 @@ export function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-4">
+    <div className="min-h-screen bg-[#FAF8FC] flex flex-col items-center justify-center px-4">
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-rose-900 rounded-2xl mb-4 shadow-lg">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-[#634B99] rounded-2xl mb-4 shadow-lg">
             <span className="text-3xl">🍷</span>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">Wine Cellar</h1>
-          <p className="text-gray-500 text-sm mt-1">マイワインコレクション</p>
+          <h1 className="text-2xl font-bold text-[#1E0F38]">Wine Cellar</h1>
+          <p className="text-[#8E75B8] text-sm mt-1">マイワインコレクション</p>
         </div>
 
         {/* Card */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+        <div className="bg-white rounded-2xl shadow-sm border border-[#E8E2F4] p-6">
           {/* Tab */}
-          <div className="flex rounded-lg bg-gray-100 p-1 mb-5">
+          <div className="flex rounded-xl bg-[#E8E2F4] p-1 mb-5">
             {(["signin", "signup"] as const).map((m) => (
               <button
                 key={m}
                 type="button"
                 onClick={() => { setMode(m); setError(""); setInfo(""); }}
-                className={`flex-1 py-1.5 rounded-md text-sm font-medium transition ${
+                className={`flex-1 py-1.5 rounded-lg text-sm font-medium transition ${
                   mode === m
-                    ? "bg-white text-gray-900 shadow-sm"
-                    : "text-gray-500 hover:text-gray-700"
+                    ? "bg-white text-[#1E0F38] shadow-sm"
+                    : "text-[#8E75B8] hover:text-[#634B99]"
                 }`}
               >
                 {m === "signin" ? "ログイン" : "新規登録"}
@@ -75,7 +75,7 @@ export function LoginForm() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-xs font-semibold text-[#634B99] mb-1.5 uppercase tracking-wide">
                 メールアドレス
               </label>
               <input
@@ -83,12 +83,12 @@ export function LoginForm() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-300"
+                className="w-full rounded-xl border-2 border-[#E8E2F4] px-3 py-2.5 text-sm text-[#1E0F38] placeholder:text-[#CABFE3] focus:outline-none focus:border-[#8E75B8] transition-colors"
                 placeholder="example@email.com"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-xs font-semibold text-[#634B99] mb-1.5 uppercase tracking-wide">
                 パスワード
               </label>
               <input
@@ -97,18 +97,18 @@ export function LoginForm() {
                 minLength={6}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-rose-300"
+                className="w-full rounded-xl border-2 border-[#E8E2F4] px-3 py-2.5 text-sm text-[#1E0F38] placeholder:text-[#CABFE3] focus:outline-none focus:border-[#8E75B8] transition-colors"
                 placeholder={mode === "signup" ? "6文字以上" : "••••••••"}
               />
             </div>
 
             {error && (
-              <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">
+              <p className="text-sm text-red-600 bg-red-50 rounded-xl px-3 py-2">
                 {error}
               </p>
             )}
             {info && (
-              <p className="text-sm text-emerald-700 bg-emerald-50 rounded-lg px-3 py-2">
+              <p className="text-sm text-emerald-700 bg-emerald-50 rounded-xl px-3 py-2">
                 {info}
               </p>
             )}
@@ -116,7 +116,7 @@ export function LoginForm() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-2.5 rounded-lg bg-rose-800 text-white text-sm font-semibold hover:bg-rose-900 transition disabled:opacity-50"
+              className="w-full py-3 rounded-2xl bg-[#634B99] text-white text-sm font-semibold shadow-[0_4px_16px_rgba(99,75,153,0.3)] hover:bg-[#1E0F38] transition disabled:opacity-50"
             >
               {loading ? "処理中..." : mode === "signin" ? "ログイン" : "アカウントを作成"}
             </button>
