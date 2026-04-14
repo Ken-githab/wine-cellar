@@ -10,8 +10,9 @@ function getFlag(name: string) {
 }
 
 function formatPrice(price: string): string {
-  if (/[¥€$£₩]/.test(price)) return price;
-  return `¥${price}`;
+  if (/[€$£₩]/.test(price)) return price;
+  const num = price.replace(/^¥/, "").trim();
+  return `${num}円`;
 }
 
 interface Props {

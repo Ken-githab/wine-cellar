@@ -17,8 +17,9 @@ function getFlag(countryName: string): string {
 }
 
 function formatPrice(price: string): string {
-  if (/[¥€$£₩]/.test(price)) return price;
-  return `¥${price}`;
+  if (/[€$£₩]/.test(price)) return price;
+  const num = price.replace(/^¥/, "").trim();
+  return `${num}円`;
 }
 
 export function WineCard({ wine, onDelete, onViewDetail }: WineCardProps) {
