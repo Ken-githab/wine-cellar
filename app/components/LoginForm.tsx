@@ -47,7 +47,12 @@ export function LoginForm() {
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-[#634B99] rounded-2xl mb-4 shadow-lg">
-            <span className="text-3xl">🍷</span>
+            <svg width="44" height="44" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+              <path d="M 28,20 L 72,20 C 78,50 62,65 54,65 L 54,80 L 62,80 L 62,84 L 38,84 L 38,80 L 46,80 L 46,65 C 38,65 22,50 28,20 Z"
+                fill="white" opacity="0.92" />
+              <path d="M 30,35 L 70,35 C 74,50 60,63 54,65 L 46,65 C 40,63 26,50 30,35 Z"
+                fill="#C9A96E" opacity="0.85" />
+            </svg>
           </div>
           <h1 className="text-2xl font-bold text-[#1E0F38]">Wine Cellar</h1>
           <p className="text-[#8E75B8] text-sm mt-1">マイワインコレクション</p>
