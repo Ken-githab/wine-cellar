@@ -9,9 +9,10 @@ function getFlag(name: string) {
   return COUNTRIES.find((c) => c.name === name)?.flag ?? "";
 }
 
-function formatPrice(price: string): string {
-  if (/[€$£₩]/.test(price)) return price;
-  const num = price.replace(/^¥/, "").trim();
+function formatPrice(price: string | number): string {
+  const s = String(price);
+  if (/[€$£₩]/.test(s)) return s;
+  const num = s.replace(/^¥/, "").trim();
   return `${num}円`;
 }
 

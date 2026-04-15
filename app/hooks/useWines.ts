@@ -27,7 +27,7 @@ function fromRow(row: any): Wine {
     country: row.country ?? "",
     region: row.region ?? "",
     grapeVariety: row.grape_variety ?? "",
-    price: row.price ?? "",
+    price: row.price != null ? String(row.price) : "",
     url: row.url ?? "",
     useCoravin: row.use_coravin ?? false,
     goodValue: row.good_value ?? false,
