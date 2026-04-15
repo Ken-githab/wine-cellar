@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Noto_Sans_JP } from "next/font/google";
 import "./globals.css";
 import { SwRegister } from "@/app/components/SwRegister";
+import { ErrorBoundary } from "@/app/components/ErrorBoundary";
 
 const notoSansJP = Noto_Sans_JP({
   weight: ["400", "500", "600", "700"],
@@ -34,7 +35,7 @@ export default function RootLayout({
   return (
     <html lang="ja" className={`${notoSansJP.variable} h-full`}>
       <body className="min-h-full flex flex-col">
-        {children}
+        <ErrorBoundary>{children}</ErrorBoundary>
         <SwRegister />
       </body>
     </html>
