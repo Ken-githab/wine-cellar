@@ -17,7 +17,7 @@ import { Toast } from "@/app/components/Toast";
 import { WineDetailModal } from "@/app/components/WineDetailModal";
 
 type SortKey = "createdAt" | "rating" | "vintage" | "price";
-type CellarSortKey = "createdAt" | "drinkFrom" | "price" | "vintage" | "grapeVariety";
+type CellarSortKey = "createdAt" | "drinkFrom" | "price" | "vintage" | "grapeVariety" | "country";
 type Tab = "cellar" | "log";
 
 // セラーワインからテイスティング記録フォームに転記するための変換
@@ -101,6 +101,7 @@ export default function Home() {
       if (cellarSortKey === "price") return parsePrice(b.price) - parsePrice(a.price);
       if (cellarSortKey === "vintage") return (parseInt(b.vintage) || 0) - (parseInt(a.vintage) || 0);
       if (cellarSortKey === "grapeVariety") return a.grapeVariety.localeCompare(b.grapeVariety, "ja");
+      if (cellarSortKey === "country") return a.country.localeCompare(b.country, "ja");
       return b.createdAt.localeCompare(a.createdAt);
     });
   }, [cellarWines, cellarSortKey, cellarTypeFilter]);
@@ -288,6 +289,7 @@ export default function Home() {
                 <option value="drinkFrom">飲み頃順</option>
                 <option value="vintage">ヴィンテージ順</option>
                 <option value="grapeVariety">品種順</option>
+                <option value="country">国順</option>
                 <option value="price">価格順</option>
               </select>
               <svg className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-[#634B99] pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
