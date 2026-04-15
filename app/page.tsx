@@ -50,7 +50,7 @@ export default function Home() {
   const { wines, isLoaded, isOnline, addWine, updateWine, deleteWine, migrateFromLocalStorage } = useWines(user);
   const { cellarWines, isLoaded: cellarLoaded, addCellarWine, updateCellarWine, deleteCellarWine, drinkOne } = useCellar(user);
 
-  const [tab, setTab] = useState<Tab>("cellar");
+  const [tab, setTab] = useState<Tab>("log");
   const [showAdd, setShowAdd] = useState(false);
   const [editTarget, setEditTarget] = useState<Wine | null>(null);
   const [detailWine, setDetailWine] = useState<Wine | null>(null);
@@ -200,21 +200,6 @@ export default function Home() {
         <div className="max-w-lg mx-auto px-4 pb-3">
           <div className="flex rounded-xl bg-[#E8E2F4] p-1">
             <button
-              onClick={() => setTab("cellar")}
-              className={`flex-1 py-1.5 rounded-lg text-sm font-medium transition flex items-center justify-center gap-1.5 ${
-                tab === "cellar" ? "bg-white text-[#1E0F38] shadow-sm" : "text-[#8E75B8] hover:text-[#634B99]"
-              }`}>
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-              </svg>
-              セラー
-              {cellarLoaded && cellarWines.length > 0 && (
-                <span className={`text-xs px-1.5 py-0.5 rounded-full ${tab === "cellar" ? "bg-[#E8E2F4] text-[#634B99]" : "bg-[#CABFE3] text-[#634B99]"}`}>
-                  {cellarWines.reduce((s, w) => s + w.quantity, 0)}本
-                </span>
-              )}
-            </button>
-            <button
               onClick={() => setTab("log")}
               className={`flex-1 py-1.5 rounded-lg text-sm font-medium transition flex items-center justify-center gap-1.5 ${
                 tab === "log" ? "bg-white text-[#1E0F38] shadow-sm" : "text-[#8E75B8] hover:text-[#634B99]"
@@ -226,6 +211,21 @@ export default function Home() {
               {isLoaded && wines.length > 0 && (
                 <span className={`text-xs px-1.5 py-0.5 rounded-full ${tab === "log" ? "bg-[#E8E2F4] text-[#634B99]" : "bg-[#CABFE3] text-[#634B99]"}`}>
                   {wines.length}本
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => setTab("cellar")}
+              className={`flex-1 py-1.5 rounded-lg text-sm font-medium transition flex items-center justify-center gap-1.5 ${
+                tab === "cellar" ? "bg-white text-[#1E0F38] shadow-sm" : "text-[#8E75B8] hover:text-[#634B99]"
+              }`}>
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+              </svg>
+              セラー
+              {cellarLoaded && cellarWines.length > 0 && (
+                <span className={`text-xs px-1.5 py-0.5 rounded-full ${tab === "cellar" ? "bg-[#E8E2F4] text-[#634B99]" : "bg-[#CABFE3] text-[#634B99]"}`}>
+                  {cellarWines.reduce((s, w) => s + w.quantity, 0)}本
                 </span>
               )}
             </button>
