@@ -22,6 +22,7 @@ const makeEmpty = (): CellarFormData => ({
   price: "",
   quantity: 1,
   wineType: "",
+  purchaseSource: "",
   drinkFrom: "",
   drinkUntil: "",
   photos: [],
@@ -46,6 +47,7 @@ export function CellarForm({ initial, onSubmit, onCancel }: Props) {
       price: initial.price,
       quantity: initial.quantity,
       wineType: initial.wineType,
+      purchaseSource: initial.purchaseSource,
       drinkFrom: initial.drinkFrom,
       drinkUntil: initial.drinkUntil,
       photos: initial.photos,
@@ -127,6 +129,11 @@ export function CellarForm({ initial, onSubmit, onCancel }: Props) {
             <input className={inputCls} value={form.price}
               onChange={(e) => set("price", e.target.value)} placeholder="例：5,000" />
           </div>
+        </div>
+        <div>
+          <label className={labelCls}>購入元</label>
+          <input className={inputCls} value={form.purchaseSource}
+            onChange={(e) => set("purchaseSource", e.target.value)} placeholder="例：エノテカ、楽天市場" />
         </div>
       </div>
 

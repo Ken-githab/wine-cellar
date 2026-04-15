@@ -11,6 +11,7 @@ export interface CellarWine {
   price: string;
   quantity: number;
   wineType: WineType;
+  purchaseSource: string;
   drinkFrom: string;  // 例: "2024"
   drinkUntil: string; // 例: "2030"
   photos: string[];
