@@ -101,13 +101,10 @@ export function CellarCard({ wine, onEdit, onDelete, onDrink }: Props) {
             </div>
           </div>
 
-          {/* Purchase source */}
-          {wine.purchaseSource && (
-            <div className="flex items-center gap-1.5 mb-2">
-              <svg className="w-3.5 h-3.5 text-[#8E75B8] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-              </svg>
-              <span className="text-xs text-[#8E75B8]">{wine.purchaseSource}</span>
+          {/* Grape variety */}
+          {wine.grapeVariety && (
+            <div className="mb-2">
+              <span className="text-xs bg-[#E8E2F4] text-[#634B99] px-2 py-0.5 rounded-full">{wine.grapeVariety}</span>
             </div>
           )}
 
