@@ -11,12 +11,13 @@ import { CellarCard } from "@/app/components/CellarCard";
 import { CellarForm } from "@/app/components/CellarForm";
 import { Modal } from "@/app/components/Modal";
 import { Wine, WineFormData, EMPTY_DETAILED_RATINGS } from "@/app/types/wine";
-import { CellarWine, CellarFormData } from "@/app/types/cellar";
+import { CellarWine, CellarFormData, WineType } from "@/app/types/cellar";
 import { isSupabaseConfigured } from "@/app/lib/supabase";
 import { Toast } from "@/app/components/Toast";
 import { WineDetailModal } from "@/app/components/WineDetailModal";
 
 type SortKey = "createdAt" | "rating" | "vintage" | "price";
+type CellarSortKey = "createdAt" | "drinkFrom" | "price";
 type Tab = "cellar" | "log";
 
 // セラーワインからテイスティング記録フォームに転記するための変換
@@ -59,6 +60,9 @@ export default function Home() {
   const [drinkConfirm, setDrinkConfirm] = useState<CellarWine | null>(null);
   const [drinkAndRecord, setDrinkAndRecord] = useState<Wine | null>(null);
 
+  const [cellarSortKey, setCellarSortKey] = useState<CellarSortKey>("createdAt");
+  const [cellarTypeFilter, setCellarTypeFilter] = useState<WineType>("");
+
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("createdAt");
   const [filterGoodValue, setFilterGoodValue] = useState(false);
@@ -82,6 +86,22 @@ export default function Home() {
       }
     } catch { /* ignore */ }
   }, [user, isLoaded]);
+
+  const filteredCellar = useMemo(() => {
+    const parsePrice = (p: string) => parseInt(p.replace(/[^\d]/g, "")) || 0;
+    const result = cellarTypeFilter
+      ? cellarWines.filter((w) => w.wineType === cellarTypeFilter)
+      : cellarWines;
+    return [...result].sort((a, b) => {
+      if (cellarSortKey === "drinkFrom") {
+        const fa = parseInt(a.drinkFrom) || 9999;
+        const fb = parseInt(b.drinkFrom) || 9999;
+        return fa - fb;
+      }
+      if (cellarSortKey === "price") return parsePrice(b.price) - parsePrice(a.price);
+      return b.createdAt.localeCompare(a.createdAt);
+    });
+  }, [cellarWines, cellarSortKey, cellarTypeFilter]);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
@@ -232,6 +252,47 @@ export default function Home() {
           </div>
         </div>
 
+        {/* Filter bar (セラータブ) */}
+        {tab === "cellar" && cellarLoaded && cellarWines.length > 0 && (
+          <div className="max-w-lg mx-auto px-4 pb-3 space-y-2">
+            {/* 種別フィルター */}
+            <div className="flex gap-1.5 overflow-x-auto pb-0.5">
+              {([
+                { value: "" as WineType,         label: "すべて" },
+                { value: "red" as WineType,       label: "赤" },
+                { value: "white" as WineType,     label: "白" },
+                { value: "sparkling" as WineType, label: "スパークリング" },
+                { value: "rose" as WineType,      label: "ロゼ" },
+              ]).map((t) => (
+                <button key={t.value}
+                  onClick={() => setCellarTypeFilter(t.value)}
+                  className={`shrink-0 px-3 py-1.5 rounded-2xl text-xs font-medium transition border-2 ${
+                    cellarTypeFilter === t.value
+                      ? "bg-[#634B99] text-white border-[#634B99]"
+                      : "bg-white border-[#E8E2F4] text-[#8E75B8]"
+                  }`}>
+                  {t.label}
+                </button>
+              ))}
+            </div>
+            {/* ソート */}
+            <div className="relative">
+              <select
+                className="w-full appearance-none bg-[#E8E2F4] text-[#634B99] rounded-2xl pl-3 pr-7 py-2 text-sm font-medium focus:outline-none"
+                value={cellarSortKey}
+                onChange={(e) => setCellarSortKey(e.target.value as CellarSortKey)}
+              >
+                <option value="createdAt">登録順</option>
+                <option value="drinkFrom">飲み頃順</option>
+                <option value="price">価格順</option>
+              </select>
+              <svg className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3 h-3 text-[#634B99] pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </div>
+        )}
+
         {/* Filter bar (記録タブのみ) */}
         {tab === "log" && isLoaded && wines.length > 0 && (
           <div className="max-w-lg mx-auto px-4 pb-3 space-y-2">
@@ -325,8 +386,15 @@ export default function Home() {
                   セラーに追加
                 </button>
               </div>
+            ) : filteredCellar.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 space-y-3">
+                <div className="w-16 h-16 bg-[#E8E2F4] rounded-full flex items-center justify-center text-2xl">🔍</div>
+                <p className="text-[#8E75B8] text-sm">該当するワインがありません</p>
+                <button onClick={() => setCellarTypeFilter("")}
+                  className="text-[#634B99] text-sm underline underline-offset-2">すべて表示</button>
+              </div>
             ) : (
-              cellarWines.map((wine) => (
+              filteredCellar.map((wine) => (
                 <CellarCard
                   key={wine.id}
                   wine={wine}

@@ -1,3 +1,5 @@
+export type WineType = "red" | "white" | "sparkling" | "rose" | "";
+
 export interface CellarWine {
   id: string;
   name: string;
@@ -8,6 +10,7 @@ export interface CellarWine {
   grapeVariety: string;
   price: string;
   quantity: number;
+  wineType: WineType;
   drinkFrom: string;  // 例: "2024"
   drinkUntil: string; // 例: "2030"
   photos: string[];

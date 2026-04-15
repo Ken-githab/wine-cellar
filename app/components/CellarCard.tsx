@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CellarWine } from "@/app/types/cellar";
+import { CellarWine, WineType } from "@/app/types/cellar";
 import { COUNTRIES } from "./WineForm";
 
 interface Props {
@@ -29,6 +29,14 @@ function drinkWindowLabel(from: string, until: string): string {
   return "";
 }
 
+const WINE_TYPE_BADGE: Record<WineType, { label: string; cls: string } | null> = {
+  red:      { label: "赤",           cls: "bg-red-100 text-red-700" },
+  white:    { label: "白",           cls: "bg-yellow-50 text-yellow-700" },
+  sparkling:{ label: "スパークリング", cls: "bg-blue-50 text-blue-700" },
+  rose:     { label: "ロゼ",         cls: "bg-pink-100 text-pink-600" },
+  "":       null,
+};
+
 function drinkWindowStatus(from: string, until: string): "peak" | "wait" | "hurry" | null {
   const year = new Date().getFullYear();
   const f = parseInt(from);
@@ -44,6 +52,7 @@ export function CellarCard({ wine, onEdit, onDelete, onDrink }: Props) {
   const flag = wine.country ? getFlag(wine.country) : "";
   const windowLabel = drinkWindowLabel(wine.drinkFrom, wine.drinkUntil);
   const windowStatus = drinkWindowStatus(wine.drinkFrom, wine.drinkUntil);
+  const typeBadge = WINE_TYPE_BADGE[wine.wineType ?? ""];
 
   const windowBadge = windowStatus === "peak"
     ? { label: "飲み頃", cls: "bg-emerald-50 text-emerald-700" }
@@ -71,9 +80,14 @@ export function CellarCard({ wine, onEdit, onDelete, onDrink }: Props) {
               <h3 className="font-semibold text-[#1E0F38] text-base leading-snug">{wine.name}</h3>
               {wine.producer && <p className="text-xs text-[#8E75B8] mt-0.5">{wine.producer}</p>}
             </div>
-            {wine.vintage && (
-              <span className="shrink-0 text-xs font-semibold bg-[#E8E2F4] text-[#634B99] px-2 py-0.5 rounded-full">{wine.vintage}</span>
-            )}
+            <div className="flex items-center gap-1.5 shrink-0">
+              {typeBadge && (
+                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${typeBadge.cls}`}>{typeBadge.label}</span>
+              )}
+              {wine.vintage && (
+                <span className="text-xs font-semibold bg-[#E8E2F4] text-[#634B99] px-2 py-0.5 rounded-full">{wine.vintage}</span>
+              )}
+            </div>
           </div>
 
           {/* Country / Price */}

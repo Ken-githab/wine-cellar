@@ -1,9 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { CellarWine, CellarFormData } from "@/app/types/cellar";
+import { CellarWine, CellarFormData, WineType } from "@/app/types/cellar";
 import { PhotoUpload } from "./PhotoUpload";
 import { COUNTRIES } from "./WineForm";
+
+const WINE_TYPES: { value: WineType; label: string; color: string }[] = [
+  { value: "red",      label: "赤",          color: "bg-red-100 text-red-700 border-red-200" },
+  { value: "white",    label: "白",          color: "bg-yellow-50 text-yellow-700 border-yellow-200" },
+  { value: "sparkling",label: "スパークリング", color: "bg-blue-50 text-blue-700 border-blue-200" },
+  { value: "rose",     label: "ロゼ",        color: "bg-pink-100 text-pink-600 border-pink-200" },
+];
 
 const makeEmpty = (): CellarFormData => ({
   name: "",
@@ -14,6 +21,7 @@ const makeEmpty = (): CellarFormData => ({
   grapeVariety: "",
   price: "",
   quantity: 1,
+  wineType: "",
   drinkFrom: "",
   drinkUntil: "",
   photos: [],
@@ -37,6 +45,7 @@ export function CellarForm({ initial, onSubmit, onCancel }: Props) {
       grapeVariety: initial.grapeVariety,
       price: initial.price,
       quantity: initial.quantity,
+      wineType: initial.wineType,
       drinkFrom: initial.drinkFrom,
       drinkUntil: initial.drinkUntil,
       photos: initial.photos,
@@ -52,6 +61,25 @@ export function CellarForm({ initial, onSubmit, onCancel }: Props) {
 
   return (
     <form onSubmit={(e) => { e.preventDefault(); onSubmit(form); }} className="space-y-5">
+
+      {/* ワイン種別 */}
+      <div>
+        <label className={labelCls}>種別</label>
+        <div className="flex gap-2 flex-wrap">
+          {WINE_TYPES.map((t) => (
+            <button
+              key={t.value}
+              type="button"
+              onClick={() => set("wineType", form.wineType === t.value ? "" : t.value)}
+              className={`px-4 py-2 rounded-2xl border-2 text-sm font-medium transition active:scale-95 ${
+                form.wineType === t.value ? t.color + " border-current" : "bg-white border-[#E8E2F4] text-[#8E75B8]"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+      </div>
 
       {/* 基本情報 */}
       <div className="space-y-4">
