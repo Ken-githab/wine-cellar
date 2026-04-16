@@ -37,7 +37,7 @@ const WINE_TYPE_BADGE: Record<WineType, { label: string; cls: string } | null> =
   "":       null,
 };
 
-function drinkWindowStatus(from: string, until: string): "peak" | "medium" | "long" | null {
+function drinkWindowStatus(from: string, until: string): "peak" | "soon" | "medium" | "long" | null {
   const currentYear = new Date().getFullYear();
   const f = parseInt(from);
   const u = parseInt(until);
@@ -47,7 +47,8 @@ function drinkWindowStatus(from: string, until: string): "peak" | "medium" | "lo
 
   if (from && !isNaN(f)) {
     const yearsUntil = f - currentYear;
-    if (yearsUntil <= 2) return "peak";    // 今が旬: 2年以内
+    if (yearsUntil <= 0) return "peak";    // 今が旬: drinkFromが今年以前
+    if (yearsUntil <= 2) return "soon";    // あと少し: 1〜2年後
     if (yearsUntil <= 7) return "medium";  // 中期熟成: 3〜7年後
     return "long";                         // 長期熟成: 8年以上
   }
@@ -67,6 +68,8 @@ export function CellarCard({ wine, onEdit, onDelete, onDrink }: Props) {
 
   const windowBadge = windowStatus === "peak"
     ? { label: "今が旬", cls: "bg-emerald-50 text-emerald-700" }
+    : windowStatus === "soon"
+    ? { label: "あと少し", cls: "bg-amber-50 text-amber-700" }
     : windowStatus === "medium"
     ? { label: "中期熟成", cls: "bg-blue-50 text-blue-700" }
     : windowStatus === "long"
