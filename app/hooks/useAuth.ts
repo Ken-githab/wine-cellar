@@ -1,37 +1,61 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import type { User } from "@supabase/supabase-js";
-import { supabase, isSupabaseConfigured } from "@/app/lib/supabase";
+import { useEffect, useState } from "react";
+import type { AppUser } from "@/app/types/auth";
+
+async function postAuth(path: string, body?: unknown) {
+  const response = await fetch(path, {
+    method: "POST",
+    headers: body ? { "content-type": "application/json" } : undefined,
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const json = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(json.error ?? "通信に失敗しました。");
+  }
+  return json as { user?: AppUser };
+}
 
 export function useAuth() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(isSupabaseConfigured);
+  const [user, setUser] = useState<AppUser | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!isSupabaseConfigured) return;
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-
-    return () => subscription.unsubscribe();
+    (async () => {
+      try {
+        const response = await fetch("/api/auth/session");
+        const json = await response.json();
+        setUser(json.user ?? null);
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, []);
 
-  const signIn = (email: string, password: string) =>
-    supabase.auth.signInWithPassword({ email, password });
+  const signIn = async (email: string, password: string) => {
+    try {
+      const { user: nextUser } = await postAuth("/api/auth/login", { email, password });
+      setUser(nextUser ?? null);
+      return { error: null };
+    } catch (error) {
+      return { error };
+    }
+  };
 
-  const signUp = (email: string, password: string) =>
-    supabase.auth.signUp({ email, password });
+  const signUp = async (email: string, password: string) => {
+    try {
+      const { user: nextUser } = await postAuth("/api/auth/signup", { email, password });
+      setUser(nextUser ?? null);
+      return { error: null };
+    } catch (error) {
+      return { error };
+    }
+  };
 
-  const signOut = () => supabase.auth.signOut();
+  const signOut = async () => {
+    await postAuth("/api/auth/logout");
+    setUser(null);
+  };
 
   return { user, loading, signIn, signUp, signOut };
 }

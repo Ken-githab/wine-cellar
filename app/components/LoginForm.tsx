@@ -25,13 +25,13 @@ export function LoginForm() {
       } else {
         const { error } = await signUp(email, password);
         if (error) throw error;
-        setInfo("確認メールを送信しました。メールのリンクをクリックしてアカウントを有効化してください。");
+        setInfo("アカウントを作成しました。");
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       if (msg.includes("Invalid login credentials")) {
         setError("メールアドレスまたはパスワードが正しくありません。");
-      } else if (msg.includes("User already registered")) {
+      } else if (msg.includes("User already registered") || msg.includes("すでに登録済み")) {
         setError("このメールアドレスはすでに登録済みです。");
       } else {
         setError(msg);

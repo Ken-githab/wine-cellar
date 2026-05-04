@@ -12,7 +12,6 @@ import { CellarForm } from "@/app/components/CellarForm";
 import { Modal } from "@/app/components/Modal";
 import { Wine, WineFormData, EMPTY_DETAILED_RATINGS } from "@/app/types/wine";
 import { CellarWine, CellarFormData, WineType } from "@/app/types/cellar";
-import { isSupabaseConfigured } from "@/app/lib/supabase";
 import { Toast } from "@/app/components/Toast";
 import { WineDetailModal } from "@/app/components/WineDetailModal";
 
@@ -77,12 +76,12 @@ export default function Home() {
   };
 
   useEffect(() => {
-    if (!user || !isLoaded || !isSupabaseConfigured) return;
+    if (!user || !isLoaded) return;
     try {
       const old = localStorage.getItem("wine-cellar-data");
       if (old) {
         const parsed: Wine[] = JSON.parse(old);
-        if (parsed.length > 0) setMigrateBanner({ count: parsed.length });
+        if (parsed.length > 0) queueMicrotask(() => setMigrateBanner({ count: parsed.length }));
       }
     } catch { /* ignore */ }
   }, [user, isLoaded]);
@@ -184,7 +183,7 @@ export default function Home() {
     );
   }
 
-  if (isSupabaseConfigured && !user) return <LoginForm />;
+  if (!user) return <LoginForm />;
 
   return (
     <div className="min-h-screen bg-[#FAF8FC]">
