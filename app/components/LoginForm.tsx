@@ -22,9 +22,11 @@ export function LoginForm() {
       if (mode === "signin") {
         const { error } = await signIn(email, password);
         if (error) throw error;
+        window.location.reload();
       } else {
         const { error } = await signUp(email, password);
         if (error) throw error;
+        window.location.reload();
         setInfo("アカウントを作成しました。");
       }
     } catch (err: unknown) {
