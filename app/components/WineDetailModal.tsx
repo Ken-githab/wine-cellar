@@ -16,6 +16,21 @@ function formatPrice(price: string | number): string {
   return `${num}円`;
 }
 
+const MIN_VIEWER_SCALE = 1;
+const MAX_VIEWER_SCALE = 4;
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function touchPoint(touch: Touch) {
+  return { x: touch.clientX, y: touch.clientY };
+}
+
+function touchDistance(a: Touch, b: Touch) {
+  return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+}
+
 interface Props {
   wine: Wine;
   onEdit: (wine: Wine) => void;
@@ -26,21 +41,41 @@ interface Props {
 export function WineDetailModal({ wine, onEdit, onDelete, onClose }: Props) {
   const [photoIndex, setPhotoIndex] = useState(0);
   const [showPhotoViewer, setShowPhotoViewer] = useState(false);
+  const [viewerScale, setViewerScale] = useState(MIN_VIEWER_SCALE);
+  const [viewerOffset, setViewerOffset] = useState({ x: 0, y: 0 });
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const touchStartX = useRef<number | null>(null);
   const photoIndexRef = useRef(photoIndex);
   const carouselRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<HTMLDivElement>(null);
+  const viewerImageRef = useRef<HTMLImageElement>(null);
+  const viewerScaleRef = useRef(viewerScale);
+  const viewerOffsetRef = useRef(viewerOffset);
+  const viewerGestureRef = useRef<{
+    mode: "idle" | "swipe" | "pinch" | "pan";
+    startDistance: number;
+    startScale: number;
+    startOffset: { x: number; y: number };
+    startPoint: { x: number; y: number } | null;
+  }>({
+    mode: "idle",
+    startDistance: 0,
+    startScale: MIN_VIEWER_SCALE,
+    startOffset: { x: 0, y: 0 },
+    startPoint: null,
+  });
   const photos = wine.photos ?? [];
   const flag = wine.country ? getFlag(wine.country) : "";
   const dr = { ...EMPTY_DETAILED_RATINGS, ...(wine.tastingNote.detailedRatings ?? {}) };
   const hasDr = Object.values(dr).some((v) => v > 0);
 
   useEffect(() => { photoIndexRef.current = photoIndex; }, [photoIndex]);
+  useEffect(() => { viewerScaleRef.current = viewerScale; }, [viewerScale]);
+  useEffect(() => { viewerOffsetRef.current = viewerOffset; }, [viewerOffset]);
 
   useEffect(() => {
-    const elements = [carouselRef.current, viewerRef.current].filter(Boolean) as HTMLDivElement[];
-    if (elements.length === 0 || photos.length <= 1) return;
+    const el = carouselRef.current;
+    if (!el || photos.length <= 1) return;
     const onStart = (e: TouchEvent) => { touchStartX.current = e.touches[0].clientX; };
     const onEnd = (e: TouchEvent) => {
       if (touchStartX.current === null) return;
@@ -53,19 +88,157 @@ export function WineDetailModal({ wine, onEdit, onDelete, onClose }: Props) {
       }
     };
     const onCancel = () => { touchStartX.current = null; };
-    elements.forEach((el) => {
-      el.addEventListener("touchstart", onStart, { passive: true });
-      el.addEventListener("touchend", onEnd, { passive: true });
-      el.addEventListener("touchcancel", onCancel, { passive: true });
-    });
+    el.addEventListener("touchstart", onStart, { passive: true });
+    el.addEventListener("touchend", onEnd, { passive: true });
+    el.addEventListener("touchcancel", onCancel, { passive: true });
     return () => {
-      elements.forEach((el) => {
-        el.removeEventListener("touchstart", onStart);
-        el.removeEventListener("touchend", onEnd);
-        el.removeEventListener("touchcancel", onCancel);
-      });
+      el.removeEventListener("touchstart", onStart);
+      el.removeEventListener("touchend", onEnd);
+      el.removeEventListener("touchcancel", onCancel);
+    };
+  }, [photos.length]);
+
+  useEffect(() => {
+    const el = viewerRef.current;
+    if (!showPhotoViewer || !el) return;
+
+    const clampViewerOffset = (scale: number, offset: { x: number; y: number }) => {
+      const image = viewerImageRef.current;
+      if (!image || scale <= MIN_VIEWER_SCALE) return { x: 0, y: 0 };
+
+      const containerWidth = el.clientWidth;
+      const containerHeight = el.clientHeight;
+      const naturalWidth = image.naturalWidth || containerWidth;
+      const naturalHeight = image.naturalHeight || containerHeight;
+      const containerRatio = containerWidth / containerHeight;
+      const imageRatio = naturalWidth / naturalHeight;
+      const renderedWidth = imageRatio > containerRatio ? containerWidth : containerHeight * imageRatio;
+      const renderedHeight = imageRatio > containerRatio ? containerWidth / imageRatio : containerHeight;
+      const maxX = Math.max(0, (renderedWidth * scale - containerWidth) / 2);
+      const maxY = Math.max(0, (renderedHeight * scale - containerHeight) / 2);
+
+      return {
+        x: clamp(offset.x, -maxX, maxX),
+        y: clamp(offset.y, -maxY, maxY),
+      };
+    };
+
+    const applyViewerTransform = (scale: number, offset: { x: number; y: number }) => {
+      const nextScale = scale <= 1.02
+        ? MIN_VIEWER_SCALE
+        : clamp(scale, MIN_VIEWER_SCALE, MAX_VIEWER_SCALE);
+      const nextOffset = nextScale === MIN_VIEWER_SCALE ? { x: 0, y: 0 } : clampViewerOffset(nextScale, offset);
+      viewerScaleRef.current = nextScale;
+      viewerOffsetRef.current = nextOffset;
+      setViewerScale(nextScale);
+      setViewerOffset(nextOffset);
+    };
+
+    const onStart = (e: TouchEvent) => {
+      const gesture = viewerGestureRef.current;
+
+      if (e.touches.length === 2) {
+        e.preventDefault();
+        gesture.mode = "pinch";
+        gesture.startDistance = Math.max(touchDistance(e.touches[0], e.touches[1]), 1);
+        gesture.startScale = viewerScaleRef.current;
+        gesture.startOffset = viewerOffsetRef.current;
+        gesture.startPoint = null;
+        return;
+      }
+
+      if (e.touches.length === 1) {
+        gesture.startPoint = touchPoint(e.touches[0]);
+        gesture.startOffset = viewerOffsetRef.current;
+        gesture.mode = viewerScaleRef.current > MIN_VIEWER_SCALE ? "pan" : "swipe";
+      }
+    };
+
+    const onMove = (e: TouchEvent) => {
+      const gesture = viewerGestureRef.current;
+
+      if (e.touches.length === 2 && gesture.mode === "pinch") {
+        e.preventDefault();
+        const nextScale = gesture.startScale * (touchDistance(e.touches[0], e.touches[1]) / gesture.startDistance);
+        applyViewerTransform(nextScale, gesture.startOffset);
+        return;
+      }
+
+      if (e.touches.length === 1 && gesture.mode === "pan" && gesture.startPoint) {
+        e.preventDefault();
+        const current = touchPoint(e.touches[0]);
+        applyViewerTransform(viewerScaleRef.current, {
+          x: gesture.startOffset.x + current.x - gesture.startPoint.x,
+          y: gesture.startOffset.y + current.y - gesture.startPoint.y,
+        });
+      }
+    };
+
+    const onEnd = (e: TouchEvent) => {
+      const gesture = viewerGestureRef.current;
+
+      if (gesture.mode === "swipe" && gesture.startPoint && e.changedTouches[0]) {
+        const endPoint = touchPoint(e.changedTouches[0]);
+        const diffX = gesture.startPoint.x - endPoint.x;
+        const diffY = Math.abs(gesture.startPoint.y - endPoint.y);
+
+        if (Math.abs(diffX) > 40 && Math.abs(diffX) > diffY) {
+          const idx = photoIndexRef.current;
+          if (diffX > 0 && idx < photos.length - 1) setPhotoIndex(idx + 1);
+          else if (diffX < 0 && idx > 0) setPhotoIndex(idx - 1);
+        }
+      }
+
+      if (e.touches.length === 1 && viewerScaleRef.current > MIN_VIEWER_SCALE) {
+        gesture.mode = "pan";
+        gesture.startPoint = touchPoint(e.touches[0]);
+        gesture.startOffset = viewerOffsetRef.current;
+        return;
+      }
+
+      if (e.touches.length === 0) {
+        gesture.mode = "idle";
+        gesture.startPoint = null;
+      }
+    };
+
+    const onCancel = () => {
+      viewerGestureRef.current.mode = "idle";
+      viewerGestureRef.current.startPoint = null;
+    };
+
+    const onResize = () => applyViewerTransform(viewerScaleRef.current, viewerOffsetRef.current);
+
+    el.addEventListener("touchstart", onStart, { passive: false });
+    el.addEventListener("touchmove", onMove, { passive: false });
+    el.addEventListener("touchend", onEnd, { passive: false });
+    el.addEventListener("touchcancel", onCancel, { passive: false });
+    window.addEventListener("resize", onResize);
+
+    return () => {
+      el.removeEventListener("touchstart", onStart);
+      el.removeEventListener("touchmove", onMove);
+      el.removeEventListener("touchend", onEnd);
+      el.removeEventListener("touchcancel", onCancel);
+      window.removeEventListener("resize", onResize);
     };
   }, [photos.length, showPhotoViewer]);
+
+  useEffect(() => {
+    if (!showPhotoViewer) {
+      viewerScaleRef.current = MIN_VIEWER_SCALE;
+      viewerOffsetRef.current = { x: 0, y: 0 };
+      setViewerScale(MIN_VIEWER_SCALE);
+      setViewerOffset({ x: 0, y: 0 });
+    }
+  }, [showPhotoViewer]);
+
+  useEffect(() => {
+    viewerScaleRef.current = MIN_VIEWER_SCALE;
+    viewerOffsetRef.current = { x: 0, y: 0 };
+    setViewerScale(MIN_VIEWER_SCALE);
+    setViewerOffset({ x: 0, y: 0 });
+  }, [photoIndex]);
 
   useEffect(() => {
     if (!showPhotoViewer) return;
@@ -268,13 +441,19 @@ export function WineDetailModal({ wine, onEdit, onDelete, onClose }: Props) {
           <div
             ref={viewerRef}
             className="relative w-full h-full flex items-center justify-center"
-            style={{ touchAction: "pan-y" }}
+            style={{ touchAction: "none" }}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
+              ref={viewerImageRef}
               src={photos[photoIndex]}
               alt={`${wine.name} 写真${photoIndex + 1} 拡大`}
-              className="w-full h-full object-contain"
+              className="w-full h-full object-contain select-none"
+              draggable={false}
+              style={{
+                transform: `translate3d(${viewerOffset.x}px, ${viewerOffset.y}px, 0) scale(${viewerScale})`,
+                transition: viewerScale === MIN_VIEWER_SCALE ? "transform 120ms ease-out" : undefined,
+              }}
               onClick={(e) => e.stopPropagation()}
             />
 
