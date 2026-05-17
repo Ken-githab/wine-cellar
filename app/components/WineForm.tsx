@@ -115,6 +115,7 @@ export function WineForm({ initial, onSubmit, onCancel }: WineFormProps) {
       },
     } : makeEmptyForm()
   );
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const set = <K extends keyof WineFormData>(key: K, value: WineFormData[K]) =>
     setForm((f) => ({ ...f, [key]: value }));
@@ -127,7 +128,19 @@ export function WineForm({ initial, onSubmit, onCancel }: WineFormProps) {
   const labelCls = "block text-xs font-semibold text-[#634B99] mb-1.5 uppercase tracking-wide";
 
   return (
-    <form onSubmit={(e) => { e.preventDefault(); onSubmit(form); }} className="space-y-5">
+    <form
+      onSubmit={async (e) => {
+        e.preventDefault();
+        if (isSubmitting) return;
+        setIsSubmitting(true);
+        try {
+          await onSubmit(form);
+        } finally {
+          setIsSubmitting(false);
+        }
+      }}
+      className="space-y-5"
+    >
 
       {/* 基本情報 */}
       <div className="space-y-4">
@@ -256,11 +269,12 @@ export function WineForm({ initial, onSubmit, onCancel }: WineFormProps) {
       {/* Actions */}
       <div className="pt-2 space-y-3">
         <button type="submit"
-          className="w-full py-4 bg-[#634B99] text-white rounded-3xl font-semibold text-sm shadow-[0_4px_16px_rgba(99,75,153,0.3)] hover:bg-[#1E0F38] transition active:scale-[0.98]">
-          {initial ? "更新する" : "登録する"}
+          disabled={isSubmitting}
+          className="w-full py-4 bg-[#634B99] text-white rounded-3xl font-semibold text-sm shadow-[0_4px_16px_rgba(99,75,153,0.3)] hover:bg-[#1E0F38] transition active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed disabled:active:scale-100">
+          {isSubmitting ? (initial ? "更新中..." : "登録中...") : (initial ? "更新する" : "登録する")}
         </button>
-        <button type="button" onClick={onCancel}
-          className="w-full py-3.5 bg-[#E8E2F4] text-[#634B99] rounded-3xl font-semibold text-sm hover:bg-[#CABFE3] transition">
+        <button type="button" onClick={onCancel} disabled={isSubmitting}
+          className="w-full py-3.5 bg-[#E8E2F4] text-[#634B99] rounded-3xl font-semibold text-sm hover:bg-[#CABFE3] transition disabled:opacity-60 disabled:cursor-not-allowed">
           キャンセル
         </button>
       </div>

@@ -54,6 +54,7 @@ export function CellarForm({ initial, onSubmit, onCancel }: Props) {
       url: initial.url,
     } : makeEmpty()
   );
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const set = <K extends keyof CellarFormData>(key: K, value: CellarFormData[K]) =>
     setForm((f) => ({ ...f, [key]: value }));
@@ -62,7 +63,19 @@ export function CellarForm({ initial, onSubmit, onCancel }: Props) {
   const labelCls = "block text-xs font-semibold text-[#634B99] mb-1.5 uppercase tracking-wide";
 
   return (
-    <form onSubmit={(e) => { e.preventDefault(); onSubmit(form); }} className="space-y-5">
+    <form
+      onSubmit={async (e) => {
+        e.preventDefault();
+        if (isSubmitting) return;
+        setIsSubmitting(true);
+        try {
+          await onSubmit(form);
+        } finally {
+          setIsSubmitting(false);
+        }
+      }}
+      className="space-y-5"
+    >
 
       {/* ワイン種別 */}
       <div>
@@ -189,11 +202,12 @@ export function CellarForm({ initial, onSubmit, onCancel }: Props) {
       {/* Actions */}
       <div className="pt-2 space-y-3">
         <button type="submit"
-          className="w-full py-4 bg-[#634B99] text-white rounded-3xl font-semibold text-sm shadow-[0_4px_16px_rgba(99,75,153,0.3)] hover:bg-[#1E0F38] transition active:scale-[0.98]">
-          {initial ? "更新する" : "セラーに追加"}
+          disabled={isSubmitting}
+          className="w-full py-4 bg-[#634B99] text-white rounded-3xl font-semibold text-sm shadow-[0_4px_16px_rgba(99,75,153,0.3)] hover:bg-[#1E0F38] transition active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed disabled:active:scale-100">
+          {isSubmitting ? (initial ? "更新中..." : "追加中...") : (initial ? "更新する" : "セラーに追加")}
         </button>
-        <button type="button" onClick={onCancel}
-          className="w-full py-3.5 bg-[#E8E2F4] text-[#634B99] rounded-3xl font-semibold text-sm hover:bg-[#CABFE3] transition">
+        <button type="button" onClick={onCancel} disabled={isSubmitting}
+          className="w-full py-3.5 bg-[#E8E2F4] text-[#634B99] rounded-3xl font-semibold text-sm hover:bg-[#CABFE3] transition disabled:opacity-60 disabled:cursor-not-allowed">
           キャンセル
         </button>
       </div>

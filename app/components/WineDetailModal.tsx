@@ -25,10 +25,12 @@ interface Props {
 
 export function WineDetailModal({ wine, onEdit, onDelete, onClose }: Props) {
   const [photoIndex, setPhotoIndex] = useState(0);
+  const [showPhotoViewer, setShowPhotoViewer] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const touchStartX = useRef<number | null>(null);
   const photoIndexRef = useRef(photoIndex);
   const carouselRef = useRef<HTMLDivElement>(null);
+  const viewerRef = useRef<HTMLDivElement>(null);
   const photos = wine.photos ?? [];
   const flag = wine.country ? getFlag(wine.country) : "";
   const dr = { ...EMPTY_DETAILED_RATINGS, ...(wine.tastingNote.detailedRatings ?? {}) };
@@ -37,8 +39,8 @@ export function WineDetailModal({ wine, onEdit, onDelete, onClose }: Props) {
   useEffect(() => { photoIndexRef.current = photoIndex; }, [photoIndex]);
 
   useEffect(() => {
-    const el = carouselRef.current;
-    if (!el || photos.length <= 1) return;
+    const elements = [carouselRef.current, viewerRef.current].filter(Boolean) as HTMLDivElement[];
+    if (elements.length === 0 || photos.length <= 1) return;
     const onStart = (e: TouchEvent) => { touchStartX.current = e.touches[0].clientX; };
     const onEnd = (e: TouchEvent) => {
       if (touchStartX.current === null) return;
@@ -51,15 +53,28 @@ export function WineDetailModal({ wine, onEdit, onDelete, onClose }: Props) {
       }
     };
     const onCancel = () => { touchStartX.current = null; };
-    el.addEventListener("touchstart", onStart, { passive: true });
-    el.addEventListener("touchend", onEnd, { passive: true });
-    el.addEventListener("touchcancel", onCancel, { passive: true });
+    elements.forEach((el) => {
+      el.addEventListener("touchstart", onStart, { passive: true });
+      el.addEventListener("touchend", onEnd, { passive: true });
+      el.addEventListener("touchcancel", onCancel, { passive: true });
+    });
     return () => {
-      el.removeEventListener("touchstart", onStart);
-      el.removeEventListener("touchend", onEnd);
-      el.removeEventListener("touchcancel", onCancel);
+      elements.forEach((el) => {
+        el.removeEventListener("touchstart", onStart);
+        el.removeEventListener("touchend", onEnd);
+        el.removeEventListener("touchcancel", onCancel);
+      });
     };
-  }, [photos.length]);
+  }, [photos.length, showPhotoViewer]);
+
+  useEffect(() => {
+    if (!showPhotoViewer) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setShowPhotoViewer(false);
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [showPhotoViewer]);
 
   return (
     <>
@@ -93,23 +108,33 @@ export function WineDetailModal({ wine, onEdit, onDelete, onClose }: Props) {
 
           {/* Photo carousel */}
           {photos.length > 0 && (
-            <div ref={carouselRef} className="relative bg-gray-900" style={{ height: 260, touchAction: "pan-y" }}>
+            <div
+              ref={carouselRef}
+              onClick={() => setShowPhotoViewer(true)}
+              className="relative bg-gray-900 cursor-zoom-in"
+              style={{ height: 260, touchAction: "pan-y" }}
+            >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={photos[photoIndex]} alt={`${wine.name} 写真${photoIndex + 1}`}
                 className="w-full h-full object-contain" />
+              <div className="absolute right-3 bottom-3 bg-black/55 text-white rounded-full w-9 h-9 flex items-center justify-center">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 3h6m0 0v6m0-6-7 7M9 21H3m0 0v-6m0 6 7-7" />
+                </svg>
+              </div>
               {photos.length > 1 && (
                 <>
                   {photoIndex > 0 && (
-                    <button onClick={() => setPhotoIndex((i) => i - 1)}
+                    <button onClick={(e) => { e.stopPropagation(); setPhotoIndex((i) => i - 1); }}
                       className="absolute left-3 top-1/2 -translate-y-1/2 bg-black/50 text-white rounded-full w-9 h-9 flex items-center justify-center text-xl">‹</button>
                   )}
                   {photoIndex < photos.length - 1 && (
-                    <button onClick={() => setPhotoIndex((i) => i + 1)}
+                    <button onClick={(e) => { e.stopPropagation(); setPhotoIndex((i) => i + 1); }}
                       className="absolute right-3 top-1/2 -translate-y-1/2 bg-black/50 text-white rounded-full w-9 h-9 flex items-center justify-center text-xl">›</button>
                   )}
                   <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-2">
                     {photos.map((_, i) => (
-                      <button key={i} onClick={() => setPhotoIndex(i)}
+                      <button key={i} onClick={(e) => { e.stopPropagation(); setPhotoIndex(i); }}
                         className={`w-2 h-2 rounded-full transition ${i === photoIndex ? "bg-white" : "bg-white/40"}`} />
                     ))}
                   </div>
@@ -216,6 +241,78 @@ export function WineDetailModal({ wine, onEdit, onDelete, onClose }: Props) {
               className="w-full py-3.5 bg-[#E8E2F4] text-[#634B99] rounded-2xl font-semibold text-sm">
               キャンセル
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Fullscreen photo viewer */}
+      {showPhotoViewer && (
+        <div
+          className="fixed inset-0 z-[70] bg-black flex items-center justify-center"
+          role="dialog"
+          aria-modal="true"
+          aria-label="写真を拡大表示"
+          onClick={() => setShowPhotoViewer(false)}
+        >
+          <button
+            onClick={() => setShowPhotoViewer(false)}
+            className="absolute right-4 z-10 w-10 h-10 rounded-full bg-white/15 text-white flex items-center justify-center"
+            style={{ top: "max(1rem, env(safe-area-inset-top))" }}
+            aria-label="閉じる"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+
+          <div
+            ref={viewerRef}
+            className="relative w-full h-full flex items-center justify-center"
+            style={{ touchAction: "pan-y" }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={photos[photoIndex]}
+              alt={`${wine.name} 写真${photoIndex + 1} 拡大`}
+              className="w-full h-full object-contain"
+              onClick={(e) => e.stopPropagation()}
+            />
+
+            {photos.length > 1 && (
+              <>
+                {photoIndex > 0 && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setPhotoIndex((i) => i - 1); }}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 bg-black/45 text-white rounded-full w-10 h-10 flex items-center justify-center text-2xl"
+                    aria-label="前の写真"
+                  >
+                    ‹
+                  </button>
+                )}
+                {photoIndex < photos.length - 1 && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setPhotoIndex((i) => i + 1); }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 bg-black/45 text-white rounded-full w-10 h-10 flex items-center justify-center text-2xl"
+                    aria-label="次の写真"
+                  >
+                    ›
+                  </button>
+                )}
+                <div
+                  className="absolute left-0 right-0 flex justify-center gap-2"
+                  style={{ bottom: "max(1rem, env(safe-area-inset-bottom))" }}
+                >
+                  {photos.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={(e) => { e.stopPropagation(); setPhotoIndex(i); }}
+                      className={`w-2 h-2 rounded-full transition ${i === photoIndex ? "bg-white" : "bg-white/40"}`}
+                      aria-label={`${i + 1}枚目の写真`}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
