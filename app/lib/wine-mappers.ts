@@ -15,6 +15,7 @@ export function wineFromRow(row: any): Wine {
     country: row.country ?? "",
     region: row.region ?? "",
     grapeVariety: row.grape_variety ?? "",
+    wineType: row.wine_type ?? "",
     price: row.price != null ? String(row.price) : "",
     url: row.url ?? "",
     useCoravin: row.use_coravin ?? false,

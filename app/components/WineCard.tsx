@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Wine } from "@/app/types/wine";
+import { WINE_TYPE_BADGE } from "@/app/types/cellar";
 import { StarRating } from "./StarRating";
 import { COUNTRIES } from "./WineForm";
 
@@ -33,6 +34,7 @@ export function WineCard({ wine, onDelete, onViewDetail }: WineCardProps) {
   const wasLongPress = useRef(false);
   const photos = wine.photos ?? [];
   const flag = wine.country ? getFlag(wine.country) : "";
+  const typeBadge = WINE_TYPE_BADGE[wine.wineType ?? ""];
 
   useEffect(() => { photoIndexRef.current = photoIndex; }, [photoIndex]);
 
@@ -123,6 +125,9 @@ export function WineCard({ wine, onDelete, onViewDetail }: WineCardProps) {
           {/* Title + vintage */}
           <div className="flex items-start gap-2">
             <h3 className="flex-1 font-semibold text-[#1E0F38] text-base leading-snug truncate">{wine.name}</h3>
+            {typeBadge && (
+              <span className={`shrink-0 text-xs font-medium px-2 py-0.5 rounded-full ${typeBadge.cls}`}>{typeBadge.label}</span>
+            )}
             {wine.vintage && (
               <span className="shrink-0 text-xs font-semibold bg-[#E8E2F4] text-[#634B99] px-2 py-0.5 rounded-full">{wine.vintage}</span>
             )}

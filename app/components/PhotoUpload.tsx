@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
-const MAX_PHOTOS = 4;
+const MAX_PHOTOS = 5;
 const MAX_DIMENSION = 1200;
 const JPEG_QUALITY = 0.75;
 const LONG_PRESS_MS = 500;
@@ -178,7 +178,7 @@ export function PhotoUpload({ photos, onChange }: PhotoUploadProps) {
 
   return (
     <div>
-      <div className="grid grid-cols-4 gap-2">
+      <div className="grid grid-cols-5 gap-2">
         {photos.map((src, i) => {
           const isSource = dragIndex === i;
           const isTarget = dropIndex === i && dragIndex !== null && dragIndex !== i;

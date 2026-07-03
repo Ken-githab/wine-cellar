@@ -16,6 +16,7 @@ create table if not exists wines (
   country text not null default '',
   region text not null default '',
   grape_variety text not null default '',
+  wine_type text,
   price text,
   url text,
   use_coravin boolean not null default false,

@@ -1,3 +1,5 @@
+import { WineType } from "@/app/types/cellar";
+
 export type GrapeVariety =
   | "カベルネ・ソーヴィニヨン"
   | "メルロー"
@@ -63,11 +65,12 @@ export interface Wine {
   country: string;
   region: string;
   grapeVariety: string;
+  wineType: WineType;
   price: string;  // 例: "¥3,500" や "€25"
   url: string;    // 購入先・参考URLなど
   useCoravin: boolean;
   goodValue: boolean;
-  photos: string[]; // base64 data URLs, max 4
+  photos: string[]; // base64 data URLs, max 5
   tastingNote: TastingNote;
   createdAt: string;
   updatedAt: string;

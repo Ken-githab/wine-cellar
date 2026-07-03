@@ -32,12 +32,12 @@ export async function POST(request: NextRequest) {
 
   const rows = await sql`
     insert into wines (
-      id, user_id, name, producer, vintage, country, region, grape_variety,
+      id, user_id, name, producer, vintage, country, region, grape_variety, wine_type,
       price, url, use_coravin, good_value, photos, tasting_note, created_at, updated_at
     )
     values (
       ${id}, ${user.id}, ${data.name ?? ""}, ${data.producer ?? ""}, ${data.vintage || null},
-      ${data.country ?? ""}, ${data.region ?? ""}, ${data.grapeVariety ?? ""},
+      ${data.country ?? ""}, ${data.region ?? ""}, ${data.grapeVariety ?? ""}, ${data.wineType || null},
       ${data.price || null}, ${data.url || null}, ${Boolean(data.useCoravin)},
       ${Boolean(data.goodValue)}, ${JSON.stringify(data.photos ?? [])}::jsonb,
       ${JSON.stringify(data.tastingNote ?? {})}::jsonb, ${now}, ${now}

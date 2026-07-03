@@ -4,6 +4,7 @@ import { useState } from "react";
 import {
   Wine, WineFormData, EMPTY_DETAILED_RATINGS, DETAILED_RATING_LABELS, DetailedRatings,
 } from "@/app/types/wine";
+import { WINE_TYPES } from "@/app/types/cellar";
 import { StarRating } from "./StarRating";
 import { PhotoUpload } from "./PhotoUpload";
 
@@ -48,6 +49,7 @@ const makeEmptyForm = (): WineFormData => ({
   country: "",
   region: "",
   grapeVariety: "",
+  wineType: "",
   price: "",
   url: "",
   useCoravin: false,
@@ -104,6 +106,7 @@ export function WineForm({ initial, onSubmit, onCancel }: WineFormProps) {
       country: initial.country ?? "",
       region: initial.region,
       grapeVariety: initial.grapeVariety,
+      wineType: initial.wineType ?? "",
       price: initial.price ?? "",
       url: initial.url ?? "",
       useCoravin: initial.useCoravin,
@@ -141,6 +144,25 @@ export function WineForm({ initial, onSubmit, onCancel }: WineFormProps) {
       }}
       className="space-y-5"
     >
+
+      {/* ワイン種別 */}
+      <div>
+        <label className={labelCls}>種別</label>
+        <div className="flex gap-2 flex-wrap">
+          {WINE_TYPES.map((t) => (
+            <button
+              key={t.value}
+              type="button"
+              onClick={() => set("wineType", form.wineType === t.value ? "" : t.value)}
+              className={`px-4 py-2 rounded-2xl border-2 text-sm font-medium transition active:scale-95 ${
+                form.wineType === t.value ? t.color + " border-current" : "bg-white border-[#E8E2F4] text-[#8E75B8]"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+      </div>
 
       {/* 基本情報 */}
       <div className="space-y-4">
@@ -219,7 +241,7 @@ export function WineForm({ initial, onSubmit, onCancel }: WineFormProps) {
 
       {/* 写真 */}
       <div className="border-t border-[#E8E2F4] pt-5">
-        <label className={labelCls}>写真（最大4枚）</label>
+        <label className={labelCls}>写真（最大5枚）</label>
         <PhotoUpload photos={form.photos} onChange={(photos) => set("photos", photos)} />
       </div>
 

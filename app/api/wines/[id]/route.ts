@@ -24,6 +24,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
         country = ${data.country ?? ""},
         region = ${data.region ?? ""},
         grape_variety = ${data.grapeVariety ?? ""},
+        wine_type = ${data.wineType || null},
         price = ${data.price || null},
         url = ${data.url || null},
         use_coravin = ${Boolean(data.useCoravin)},

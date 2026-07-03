@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CellarWine, WineType } from "@/app/types/cellar";
+import { CellarWine, WINE_TYPE_BADGE } from "@/app/types/cellar";
 import { COUNTRIES } from "./WineForm";
 
 interface Props {
@@ -28,14 +28,6 @@ function drinkWindowLabel(from: string, until: string): string {
   if (until) return `〜${until}年`;
   return "";
 }
-
-const WINE_TYPE_BADGE: Record<WineType, { label: string; cls: string } | null> = {
-  red:      { label: "赤",           cls: "bg-red-100 text-red-700" },
-  white:    { label: "白",           cls: "bg-yellow-50 text-yellow-700" },
-  sparkling:{ label: "スパークリング", cls: "bg-blue-50 text-blue-700" },
-  rose:     { label: "ロゼ",         cls: "bg-pink-100 text-pink-600" },
-  "":       null,
-};
 
 function drinkWindowStatus(from: string, until: string): "peak" | "soon" | "medium" | "long" | null {
   const currentYear = new Date().getFullYear();

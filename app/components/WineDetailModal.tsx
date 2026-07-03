@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Wine, DETAILED_RATING_LABELS, DetailedRatings, EMPTY_DETAILED_RATINGS } from "@/app/types/wine";
+import { WINE_TYPE_BADGE } from "@/app/types/cellar";
 import { StarRating } from "./StarRating";
 import { COUNTRIES } from "./WineForm";
 
@@ -66,6 +67,7 @@ export function WineDetailModal({ wine, onEdit, onDelete, onClose }: Props) {
   });
   const photos = wine.photos ?? [];
   const flag = wine.country ? getFlag(wine.country) : "";
+  const typeBadge = WINE_TYPE_BADGE[wine.wineType ?? ""];
   const dr = { ...EMPTY_DETAILED_RATINGS, ...(wine.tastingNote.detailedRatings ?? {}) };
   const hasDr = Object.values(dr).some((v) => v > 0);
 
@@ -268,6 +270,9 @@ export function WineDetailModal({ wine, onEdit, onDelete, onClose }: Props) {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <h2 className="font-bold text-[#1E0F38] text-base leading-snug truncate">{wine.name}</h2>
+                {typeBadge && (
+                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full shrink-0 ${typeBadge.cls}`}>{typeBadge.label}</span>
+                )}
                 {wine.vintage && (
                   <span className="text-xs font-semibold bg-[#E8E2F4] text-[#634B99] px-2 py-0.5 rounded-full shrink-0">{wine.vintage}</span>
                 )}

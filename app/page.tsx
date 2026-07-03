@@ -11,7 +11,7 @@ import { CellarCard } from "@/app/components/CellarCard";
 import { CellarForm } from "@/app/components/CellarForm";
 import { Modal } from "@/app/components/Modal";
 import { Wine, WineFormData, EMPTY_DETAILED_RATINGS } from "@/app/types/wine";
-import { CellarWine, CellarFormData, WineType } from "@/app/types/cellar";
+import { CellarWine, CellarFormData, WineType, WINE_TYPES } from "@/app/types/cellar";
 import { Toast } from "@/app/components/Toast";
 import { WineDetailModal } from "@/app/components/WineDetailModal";
 
@@ -29,6 +29,7 @@ function cellarToWine(c: CellarWine): Wine {
     country: c.country,
     region: c.region,
     grapeVariety: c.grapeVariety,
+    wineType: c.wineType,
     price: c.price,
     url: c.url,
     useCoravin: false,
@@ -65,6 +66,7 @@ export default function Home() {
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("createdAt");
   const [filterGoodValue, setFilterGoodValue] = useState(false);
+  const [logTypeFilter, setLogTypeFilter] = useState<WineType>("");
   const [migrateBanner, setMigrateBanner] = useState<{ count: number } | null>(null);
   const [migrating, setMigrating] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "error" | "success" } | null>(null);
@@ -113,7 +115,8 @@ export default function Home() {
       const textOk = !q || w.name.toLowerCase().includes(q) || w.producer.toLowerCase().includes(q) ||
         w.region.toLowerCase().includes(q) || w.grapeVariety.toLowerCase().includes(q) || w.country.toLowerCase().includes(q);
       const goodValueOk = !filterGoodValue || (w.goodValue ?? false);
-      return textOk && goodValueOk;
+      const typeOk = !logTypeFilter || w.wineType === logTypeFilter;
+      return textOk && goodValueOk && typeOk;
     });
     return [...result].sort((a, b) => {
       if (sortKey === "createdAt") return b.createdAt.localeCompare(a.createdAt);
@@ -122,7 +125,7 @@ export default function Home() {
       if (sortKey === "price") return parsePrice(b.price) - parsePrice(a.price);
       return 0;
     });
-  }, [wines, search, sortKey, filterGoodValue]);
+  }, [wines, search, sortKey, filterGoodValue, logTypeFilter]);
 
   const handleAdd = async (data: WineFormData) => {
     try { await addWine(data); setShowAdd(false); setToast({ message: "ワインを登録しました", type: "success" }); }
@@ -301,6 +304,23 @@ export default function Home() {
         {/* Filter bar (記録タブのみ) */}
         {tab === "log" && isLoaded && wines.length > 0 && (
           <div className="max-w-lg mx-auto px-4 pb-3 space-y-2">
+            {/* 種別フィルター */}
+            <div className="flex gap-1.5 overflow-x-auto pb-0.5">
+              {([
+                { value: "" as WineType, label: "すべて" },
+                ...WINE_TYPES,
+              ]).map((t) => (
+                <button key={t.value}
+                  onClick={() => setLogTypeFilter(t.value)}
+                  className={`shrink-0 px-3 py-1.5 rounded-2xl text-xs font-medium transition border-2 ${
+                    logTypeFilter === t.value
+                      ? "bg-[#634B99] text-white border-[#634B99]"
+                      : "bg-white border-[#E8E2F4] text-[#8E75B8]"
+                  }`}>
+                  {t.label}
+                </button>
+              ))}
+            </div>
             <div className="relative">
               <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8E75B8]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -437,7 +457,7 @@ export default function Home() {
                 <p className="text-[#8E75B8] text-sm text-center">
                   {filterGoodValue ? "コスパ最高のワインがありません" : `「${search}」に一致するワインは見つかりませんでした`}
                 </p>
-                <button onClick={() => { setSearch(""); setFilterGoodValue(false); }}
+                <button onClick={() => { setSearch(""); setFilterGoodValue(false); setLogTypeFilter(""); }}
                   className="text-[#634B99] text-sm underline underline-offset-2">
                   すべて表示
                 </button>

@@ -1,16 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { CellarWine, CellarFormData, WineType } from "@/app/types/cellar";
+import { CellarWine, CellarFormData, WINE_TYPES } from "@/app/types/cellar";
 import { PhotoUpload } from "./PhotoUpload";
 import { COUNTRIES } from "./WineForm";
-
-const WINE_TYPES: { value: WineType; label: string; color: string }[] = [
-  { value: "red",      label: "赤",          color: "bg-red-100 text-red-700 border-red-200" },
-  { value: "white",    label: "白",          color: "bg-yellow-50 text-yellow-700 border-yellow-200" },
-  { value: "sparkling",label: "スパークリング", color: "bg-blue-50 text-blue-700 border-blue-200" },
-  { value: "rose",     label: "ロゼ",        color: "bg-pink-100 text-pink-600 border-pink-200" },
-];
 
 const makeEmpty = (): CellarFormData => ({
   name: "",
@@ -188,7 +181,7 @@ export function CellarForm({ initial, onSubmit, onCancel }: Props) {
 
       {/* 写真 */}
       <div className="border-t border-[#E8E2F4] pt-5">
-        <label className={labelCls}>写真（最大4枚）</label>
+        <label className={labelCls}>写真（最大5枚）</label>
         <PhotoUpload photos={form.photos} onChange={(photos) => set("photos", photos)} />
       </div>
 
