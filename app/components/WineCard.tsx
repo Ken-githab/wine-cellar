@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Wine } from "@/app/types/wine";
 import { WINE_TYPE_BADGE } from "@/app/types/cellar";
+import { splitGrapeVarieties } from "@/app/lib/grape-variety";
 import { StarRating } from "./StarRating";
 import { COUNTRIES } from "./WineForm";
 
@@ -35,6 +36,7 @@ export function WineCard({ wine, onDelete, onViewDetail }: WineCardProps) {
   const photos = wine.photos ?? [];
   const flag = wine.country ? getFlag(wine.country) : "";
   const typeBadge = WINE_TYPE_BADGE[wine.wineType ?? ""];
+  const grapeVarieties = splitGrapeVarieties(wine.grapeVariety ?? "");
 
   useEffect(() => { photoIndexRef.current = photoIndex; }, [photoIndex]);
 
@@ -145,11 +147,11 @@ export function WineCard({ wine, onDelete, onViewDetail }: WineCardProps) {
           )}
 
           {/* Tags */}
-          {(wine.grapeVariety || wine.goodValue) && (
+          {(grapeVarieties.length > 0 || wine.goodValue) && (
             <div className="flex flex-wrap gap-1.5">
-              {wine.grapeVariety && (
-                <span className="text-xs bg-[#E8E2F4] text-[#634B99] px-2 py-0.5 rounded-full">{wine.grapeVariety}</span>
-              )}
+              {grapeVarieties.map((variety, i) => (
+                <span key={i} className="text-xs bg-[#E8E2F4] text-[#634B99] px-2 py-0.5 rounded-full">{variety}</span>
+              ))}
               {wine.goodValue && (
                 <span className="text-xs bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full">コスパ最高</span>
               )}

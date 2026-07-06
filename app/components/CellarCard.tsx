@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { CellarWine, WINE_TYPE_BADGE } from "@/app/types/cellar";
+import { splitGrapeVarieties } from "@/app/lib/grape-variety";
 import { COUNTRIES } from "./WineForm";
 
 interface Props {
@@ -57,6 +58,7 @@ export function CellarCard({ wine, onEdit, onDelete, onDrink }: Props) {
   const windowLabel = drinkWindowLabel(wine.drinkFrom, wine.drinkUntil);
   const windowStatus = drinkWindowStatus(wine.drinkFrom, wine.drinkUntil);
   const typeBadge = WINE_TYPE_BADGE[wine.wineType ?? ""];
+  const grapeVarieties = splitGrapeVarieties(wine.grapeVariety ?? "");
 
   const windowBadge = windowStatus === "peak"
     ? { label: "今が旬", cls: "bg-emerald-50 text-emerald-700" }
@@ -97,9 +99,11 @@ export function CellarCard({ wine, onEdit, onDelete, onDrink }: Props) {
           </div>
 
           {/* Grape variety */}
-          {wine.grapeVariety && (
-            <div className="mb-2">
-              <span className="text-xs bg-[#E8E2F4] text-[#634B99] px-2 py-0.5 rounded-full">{wine.grapeVariety}</span>
+          {grapeVarieties.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mb-2">
+              {grapeVarieties.map((variety, i) => (
+                <span key={i} className="text-xs bg-[#E8E2F4] text-[#634B99] px-2 py-0.5 rounded-full">{variety}</span>
+              ))}
             </div>
           )}
 

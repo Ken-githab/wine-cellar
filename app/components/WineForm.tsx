@@ -199,17 +199,16 @@ export function WineForm({ initial, onSubmit, onCancel }: WineFormProps) {
               onChange={(e) => set("region", e.target.value)} placeholder="例：ボルドー" />
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className={labelCls}>品種</label>
-            <input className={inputCls} value={form.grapeVariety}
-              onChange={(e) => set("grapeVariety", e.target.value)} placeholder="例：ピノ・ノワール" />
-          </div>
-          <div>
-            <label className={labelCls}>価格</label>
-            <input className={inputCls} value={form.price}
-              onChange={(e) => set("price", e.target.value)} placeholder="例：¥3,500" />
-          </div>
+        <div>
+          <label className={labelCls}>品種</label>
+          <textarea rows={2} className={`${inputCls} resize-none`} value={form.grapeVariety}
+            onChange={(e) => set("grapeVariety", e.target.value)}
+            placeholder={"例：ピノ・ノワール\n複数品種は改行で区切れます"} />
+        </div>
+        <div>
+          <label className={labelCls}>価格</label>
+          <input className={inputCls} value={form.price}
+            onChange={(e) => set("price", e.target.value)} placeholder="例：¥3,500" />
         </div>
         <div>
           <label className={labelCls}>URL</label>

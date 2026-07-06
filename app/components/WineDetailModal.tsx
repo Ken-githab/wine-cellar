@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Wine, DETAILED_RATING_LABELS, DetailedRatings, EMPTY_DETAILED_RATINGS } from "@/app/types/wine";
 import { WINE_TYPE_BADGE } from "@/app/types/cellar";
+import { splitGrapeVarieties } from "@/app/lib/grape-variety";
 import { StarRating } from "./StarRating";
 import { COUNTRIES } from "./WineForm";
 
@@ -68,6 +69,7 @@ export function WineDetailModal({ wine, onEdit, onDelete, onClose }: Props) {
   const photos = wine.photos ?? [];
   const flag = wine.country ? getFlag(wine.country) : "";
   const typeBadge = WINE_TYPE_BADGE[wine.wineType ?? ""];
+  const grapeVarieties = splitGrapeVarieties(wine.grapeVariety ?? "");
   const dr = { ...EMPTY_DETAILED_RATINGS, ...(wine.tastingNote.detailedRatings ?? {}) };
   const hasDr = Object.values(dr).some((v) => v > 0);
 
@@ -329,9 +331,20 @@ export function WineDetailModal({ wine, onEdit, onDelete, onClose }: Props) {
                 <InfoItem label="国" value={`${flag} ${wine.country}`} />
               )}
               {wine.region && <InfoItem label="産地・地域" value={wine.region} />}
-              {wine.grapeVariety && <InfoItem label="品種" value={wine.grapeVariety} />}
               {wine.price && <InfoItem label="価格" value={formatPrice(wine.price)} />}
             </div>
+
+            {/* 品種 */}
+            {grapeVarieties.length > 0 && (
+              <div>
+                <p className="text-xs text-[#8E75B8] mb-1">品種</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {grapeVarieties.map((variety, i) => (
+                    <span key={i} className="text-xs bg-[#E8E2F4] text-[#634B99] px-2 py-0.5 rounded-full">{variety}</span>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* URL */}
             {wine.url && (
