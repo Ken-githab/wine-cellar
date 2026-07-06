@@ -75,7 +75,7 @@ export function CellarCard({ wine, onEdit, onDelete, onDrink }: Props) {
         {wine.photos.length > 0 && (
           <div className="bg-gray-100" style={{ height: 140 }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={wine.photos[0]} alt={wine.name} className="w-full h-full object-cover" />
+            <img src={wine.photos[0]} alt={wine.name} className="w-full h-full object-cover" loading="lazy" />
           </div>
         )}
 

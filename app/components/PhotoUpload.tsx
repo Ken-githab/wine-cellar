@@ -9,7 +9,7 @@ const JPEG_QUALITY = 0.75;
 const LONG_PRESS_MS = 500;
 const DRAG_THRESHOLD = 8; // px — この距離を超えたら長押しキャンセル
 
-async function compressImage(file: File): Promise<string> {
+async function compressImage(file: File): Promise<Blob> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     const url = URL.createObjectURL(file);
@@ -22,11 +22,27 @@ async function compressImage(file: File): Promise<string> {
       canvas.width = w;
       canvas.height = h;
       canvas.getContext("2d")!.drawImage(img, 0, 0, w, h);
-      resolve(canvas.toDataURL("image/jpeg", JPEG_QUALITY));
+      canvas.toBlob(
+        (blob) => (blob ? resolve(blob) : reject(new Error("画像の変換に失敗しました"))),
+        "image/jpeg",
+        JPEG_QUALITY
+      );
     };
     img.onerror = reject;
     img.src = url;
   });
+}
+
+async function uploadPhoto(file: File): Promise<string> {
+  const compressed = await compressImage(file);
+  const response = await fetch("/api/photos", {
+    method: "POST",
+    headers: { "content-type": "image/jpeg" },
+    body: compressed,
+  });
+  const json = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(json.error ?? "写真のアップロードに失敗しました");
+  return json.url as string;
 }
 
 interface PhotoUploadProps {
@@ -38,6 +54,10 @@ export function PhotoUpload({ photos, onChange }: PhotoUploadProps) {
   const addInputRef = useRef<HTMLInputElement>(null);
   const replaceInputRef = useRef<HTMLInputElement>(null);
   const replaceIndexRef = useRef<number>(-1);
+
+  const [uploadingCount, setUploadingCount] = useState(0);
+  const [replacingIndex, setReplacingIndex] = useState<number | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   // Drag state
   const [dragIndex, setDragIndex] = useState<number | null>(null);
@@ -56,8 +76,17 @@ export function PhotoUpload({ photos, onChange }: PhotoUploadProps) {
     if (!files) return;
     const remaining = MAX_PHOTOS - photos.length;
     const toProcess = Array.from(files).slice(0, remaining);
-    const compressed = await Promise.all(toProcess.map(compressImage));
-    onChange([...photos, ...compressed]);
+    if (toProcess.length === 0) return;
+    setUploadError(null);
+    setUploadingCount(toProcess.length);
+    try {
+      const urls = await Promise.all(toProcess.map(uploadPhoto));
+      onChange([...photos, ...urls]);
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : "写真のアップロードに失敗しました");
+    } finally {
+      setUploadingCount(0);
+    }
   };
 
   // ---- Replace photo ----
@@ -65,10 +94,18 @@ export function PhotoUpload({ photos, onChange }: PhotoUploadProps) {
     if (!files || files.length === 0) return;
     const idx = replaceIndexRef.current;
     if (idx < 0) return;
-    const compressed = await compressImage(files[0]);
-    const updated = [...photos];
-    updated[idx] = compressed;
-    onChange(updated);
+    setUploadError(null);
+    setReplacingIndex(idx);
+    try {
+      const url = await uploadPhoto(files[0]);
+      const updated = [...photos];
+      updated[idx] = url;
+      onChange(updated);
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : "写真のアップロードに失敗しました");
+    } finally {
+      setReplacingIndex(null);
+    }
   };
 
   const startReplace = (idx: number) => {
@@ -200,8 +237,15 @@ export function PhotoUpload({ photos, onChange }: PhotoUploadProps) {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={src} alt={`写真${i + 1}`} className="w-full h-full object-cover pointer-events-none" />
 
+              {/* 差し替え中スピナー */}
+              {replacingIndex === i && (
+                <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                  <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                </div>
+              )}
+
               {/* 操作ボタン — 常時表示（タッチデバイス対応） */}
-              {dragIndex === null && (
+              {dragIndex === null && replacingIndex !== i && (
                 <div className="absolute inset-0 flex items-start justify-between p-1">
                   <button
                     type="button"
@@ -227,11 +271,19 @@ export function PhotoUpload({ photos, onChange }: PhotoUploadProps) {
             </div>
           );
         })}
-        {photos.length < MAX_PHOTOS && (
+        {/* アップロード中のプレースホルダー */}
+        {Array.from({ length: uploadingCount }).map((_, i) => (
+          <div key={`uploading-${i}`}
+            className="aspect-square rounded-lg border border-gray-200 bg-gray-50 flex items-center justify-center">
+            <div className="w-5 h-5 border-2 border-[#E8E2F4] border-t-[#634B99] rounded-full animate-spin" />
+          </div>
+        ))}
+        {photos.length + uploadingCount < MAX_PHOTOS && (
           <button
             type="button"
+            disabled={uploadingCount > 0}
             onClick={() => addInputRef.current?.click()}
-            className="aspect-square rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center gap-1 text-gray-400 hover:border-gray-400 hover:text-gray-500 transition"
+            className="aspect-square rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center gap-1 text-gray-400 hover:border-gray-400 hover:text-gray-500 transition disabled:opacity-50"
           >
             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
@@ -241,6 +293,10 @@ export function PhotoUpload({ photos, onChange }: PhotoUploadProps) {
           </button>
         )}
       </div>
+
+      {uploadError && (
+        <p className="mt-2 text-xs text-red-600">{uploadError}</p>
+      )}
 
       {/* Drag ghost — Portal で body 直下に描画 */}
       {ghost && typeof document !== "undefined" && createPortal(

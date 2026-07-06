@@ -101,9 +101,10 @@ export function useCellar(user: AppUser | null) {
   );
 
   const deleteCellarWine = useCallback(
-    async (id: string): Promise<void> => {
+    async (id: string, opts?: { keepPhotos?: boolean }): Promise<void> => {
       if (user) {
-        await api(`/api/cellar/${encodeURIComponent(id)}`, { method: "DELETE" });
+        const query = opts?.keepPhotos ? "?keepPhotos=1" : "";
+        await api(`/api/cellar/${encodeURIComponent(id)}${query}`, { method: "DELETE" });
       }
       const next = cellarWines.filter((w) => w.id !== id);
       setCellarWines(next);
@@ -113,13 +114,13 @@ export function useCellar(user: AppUser | null) {
   );
 
   const drinkOne = useCallback(
-    async (id: string): Promise<number> => {
+    async (id: string, opts?: { keepPhotos?: boolean }): Promise<number> => {
       const wine = cellarWines.find((w) => w.id === id);
       if (!wine) return 0;
       const quantity = Math.max(0, wine.quantity - 1);
 
       if (quantity === 0) {
-        await deleteCellarWine(id);
+        await deleteCellarWine(id, opts);
         return 0;
       }
 

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getRequestUser, unauthorized } from "@/app/lib/api-auth";
 import { getSql } from "@/app/lib/db";
 import { wineFromRow } from "@/app/lib/wine-mappers";
+import { deletePhotosIfUnreferenced } from "@/app/lib/photo-cleanup";
 
 interface Params {
   params: Promise<{ id: string }>;
@@ -15,6 +16,10 @@ export async function PUT(request: NextRequest, { params }: Params) {
   const data = await request.json();
   const now = new Date().toISOString();
   const sql = getSql();
+
+  const oldRows = await sql`
+    select photos from wines where id = ${id} and user_id = ${user.id}
+  ` as Array<{ photos: unknown }>;
 
   const rows = await sql`
     update wines
@@ -37,6 +42,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
   ` as Array<Record<string, unknown>>;
 
   if (!rows[0]) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  await deletePhotosIfUnreferenced(sql, oldRows[0]?.photos);
   return NextResponse.json({ wine: wineFromRow(rows[0]) });
 }
 
@@ -46,6 +52,10 @@ export async function DELETE(request: NextRequest, { params }: Params) {
 
   const { id } = await params;
   const sql = getSql();
+  const oldRows = await sql`
+    select photos from wines where id = ${id} and user_id = ${user.id}
+  ` as Array<{ photos: unknown }>;
   await sql`delete from wines where id = ${id} and user_id = ${user.id}`;
+  await deletePhotosIfUnreferenced(sql, oldRows[0]?.photos);
   return NextResponse.json({ ok: true });
 }

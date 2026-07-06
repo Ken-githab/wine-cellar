@@ -95,7 +95,7 @@ export function WineCard({ wine, onDelete, onViewDetail }: WineCardProps) {
           <div ref={containerRef} className="relative bg-gray-100" style={{ height: 176, touchAction: "pan-y" }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={photos[photoIndex]} alt={`${wine.name} 写真${photoIndex + 1}`}
-              className="w-full h-full object-cover" draggable={false} />
+              className="w-full h-full object-cover" draggable={false} loading="lazy" />
             {photos.length > 1 && (
               <>
                 {photoIndex > 0 && (

@@ -163,7 +163,7 @@ export default function Home() {
     const wine = drinkConfirm;
     setDrinkConfirm(null);
     try {
-      const remaining = await drinkOne(wine.id);
+      const remaining = await drinkOne(wine.id, { keepPhotos: record });
       if (record) {
         setDrinkAndRecord(cellarToWine(wine));
         setTab("log");

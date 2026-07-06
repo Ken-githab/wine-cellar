@@ -12,7 +12,9 @@ npm run lint     # ESLint チェック
 
 ## Architecture
 
-Next.js 16 App Router + Tailwind CSS v4 のシングルページアプリ。データは `localStorage` に JSON で保存する（サーバー不要）。
+Next.js 16 App Router + Tailwind CSS v4 のシングルページアプリ。データは Neon Postgres（`DATABASE_URL`）に保存し、写真は Vercel Blob（ストア: wine-cellar-photos）にアップロードして DB には URL だけを持つ。localStorage はオフライン用キャッシュ。
+
+注意: `DATABASE_URL` / `AUTH_SECRET` / `ALLOWED_LOGIN_EMAILS` は Vercel 上で Sensitive 設定のため読み戻し不可。`vercel env pull` は `.env.local` を上書きしてこれらを空にするので実行しないこと（ローカルの `.env.local` が唯一のコピー）。
 
 ### ディレクトリ構成
 
