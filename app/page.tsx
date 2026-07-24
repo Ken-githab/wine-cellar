@@ -59,6 +59,7 @@ export default function Home() {
   const [cellarEditTarget, setCellarEditTarget] = useState<CellarWine | null>(null);
   const [drinkConfirm, setDrinkConfirm] = useState<CellarWine | null>(null);
   const [drinkAndRecord, setDrinkAndRecord] = useState<Wine | null>(null);
+  const [cellarPrefill, setCellarPrefill] = useState<CellarWine | null>(null);
 
   const [cellarSortKey, setCellarSortKey] = useState<CellarSortKey>("createdAt");
   const [cellarTypeFilter, setCellarTypeFilter] = useState<WineType>("");
@@ -143,8 +144,34 @@ export default function Home() {
     catch (err) { showError(err); }
   };
 
+
+  // wine-watch連携: ?prefill=<base64url JSON> でセラー追加フォームを事前入力して開く
+  useEffect(() => {
+    if (!user) return;
+    const raw = new URLSearchParams(window.location.search).get("prefill");
+    if (!raw) return;
+    const timer = setTimeout(() => {
+    try {
+      const json = decodeURIComponent(escape(atob(raw.replace(/-/g, "+").replace(/_/g, "/"))));
+      const d = JSON.parse(json);
+      setCellarPrefill({
+        id: "", createdAt: "", updatedAt: "",
+        name: String(d.name ?? ""), producer: String(d.producer ?? ""), vintage: String(d.vintage ?? ""),
+        country: String(d.country ?? ""), region: String(d.region ?? ""), grapeVariety: String(d.grapeVariety ?? ""),
+        price: String(d.price ?? ""), quantity: 1, wineType: (d.wineType ?? "") as WineType,
+        purchaseSource: String(d.purchaseSource ?? ""), drinkFrom: String(d.drinkFrom ?? ""),
+        drinkUntil: String(d.drinkUntil ?? ""), photos: [], url: String(d.url ?? ""),
+      });
+      setTab("cellar");
+      setShowCellarAdd(true);
+    } catch { /* 不正なprefillは無視 */ }
+    window.history.replaceState(null, "", window.location.pathname);
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [user]);
+
   const handleCellarAdd = async (data: CellarFormData) => {
-    try { await addCellarWine(data); setShowCellarAdd(false); setToast({ message: "セラーに追加しました", type: "success" }); }
+    try { await addCellarWine(data); setShowCellarAdd(false); setCellarPrefill(null); setToast({ message: "セラーに追加しました", type: "success" }); }
     catch (err) { showError(err); }
   };
 
@@ -481,8 +508,8 @@ export default function Home() {
 
       {/* セラー追加 */}
       {showCellarAdd && (
-        <Modal title="セラーに追加" onClose={() => setShowCellarAdd(false)}>
-          <CellarForm onSubmit={handleCellarAdd} onCancel={() => setShowCellarAdd(false)} />
+        <Modal title="セラーに追加" onClose={() => { setShowCellarAdd(false); setCellarPrefill(null); }}>
+          <CellarForm initial={cellarPrefill ?? undefined} onSubmit={handleCellarAdd} onCancel={() => { setShowCellarAdd(false); setCellarPrefill(null); }} />
         </Modal>
       )}
 
