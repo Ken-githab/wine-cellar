@@ -60,6 +60,7 @@ export default function Home() {
   const [drinkConfirm, setDrinkConfirm] = useState<CellarWine | null>(null);
   const [drinkAndRecord, setDrinkAndRecord] = useState<Wine | null>(null);
   const [cellarPrefill, setCellarPrefill] = useState<CellarWine | null>(null);
+  const [logPrefill, setLogPrefill] = useState<Wine | null>(null);
 
   const [cellarSortKey, setCellarSortKey] = useState<CellarSortKey>("createdAt");
   const [cellarTypeFilter, setCellarTypeFilter] = useState<WineType>("");
@@ -129,7 +130,7 @@ export default function Home() {
   }, [wines, search, sortKey, filterGoodValue, logTypeFilter]);
 
   const handleAdd = async (data: WineFormData) => {
-    try { await addWine(data); setShowAdd(false); setToast({ message: "ワインを登録しました", type: "success" }); }
+    try { await addWine(data); setShowAdd(false); setLogPrefill(null); setToast({ message: "ワインを登録しました", type: "success" }); }
     catch (err) { showError(err); }
   };
 
@@ -148,7 +149,33 @@ export default function Home() {
   // wine-watch連携: ?prefill=<base64url JSON> でセラー追加フォームを事前入力して開く
   useEffect(() => {
     if (!user) return;
-    const raw = new URLSearchParams(window.location.search).get("prefill");
+    const params = new URLSearchParams(window.location.search);
+    const rawLog = params.get("logPrefill");
+    if (rawLog) {
+      try {
+        const d = JSON.parse(decodeURIComponent(escape(atob(rawLog.replace(/-/g, "+").replace(/_/g, "/")))));
+        const t = setTimeout(() => {
+          setLogPrefill({
+            id: "", createdAt: "", updatedAt: "",
+            name: String(d.name ?? ""), producer: String(d.producer ?? ""), vintage: String(d.vintage ?? ""),
+            country: String(d.country ?? ""), region: String(d.region ?? ""), grapeVariety: String(d.grapeVariety ?? ""),
+            wineType: (d.wineType ?? "") as WineType, price: String(d.price ?? ""), url: String(d.url ?? ""),
+            useCoravin: false, goodValue: !!d.goodValue, photos: [],
+            tastingNote: {
+              rating: Number(d.rating) || 0,
+              memo: String(d.memo ?? ""),
+              date: String(d.date ?? new Date().toISOString().split("T")[0]),
+              detailedRatings: { ...EMPTY_DETAILED_RATINGS, ...(d.detailed ?? {}) },
+            },
+          });
+          setTab("log");
+          setShowAdd(true);
+        }, 0);
+        window.history.replaceState(null, "", window.location.pathname);
+        return () => clearTimeout(t);
+      } catch { /* 不正なlogPrefillは無視 */ }
+    }
+    const raw = params.get("prefill");
     if (!raw) return;
     const timer = setTimeout(() => {
     try {
@@ -558,7 +585,7 @@ export default function Home() {
       {/* テイスティング追加 */}
       {showAdd && (
         <Modal title="ワインを追加" onClose={() => setShowAdd(false)}>
-          <WineForm onSubmit={handleAdd} onCancel={() => setShowAdd(false)} />
+          <WineForm initial={logPrefill ?? undefined} onSubmit={handleAdd} onCancel={() => { setShowAdd(false); setLogPrefill(null); }} />
         </Modal>
       )}
 
