@@ -160,7 +160,8 @@ export default function Home() {
             name: String(d.name ?? ""), producer: String(d.producer ?? ""), vintage: String(d.vintage ?? ""),
             country: String(d.country ?? ""), region: String(d.region ?? ""), grapeVariety: String(d.grapeVariety ?? ""),
             wineType: (d.wineType ?? "") as WineType, price: String(d.price ?? ""), url: String(d.url ?? ""),
-            useCoravin: false, goodValue: !!d.goodValue, photos: [],
+            useCoravin: false, goodValue: !!d.goodValue,
+            photos: Array.isArray(d.photos) ? d.photos.filter((x: unknown) => typeof x === "string").slice(0, 5) : [],
             tastingNote: {
               rating: Number(d.rating) || 0,
               memo: String(d.memo ?? ""),
