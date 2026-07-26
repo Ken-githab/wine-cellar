@@ -10,6 +10,7 @@ import { WineForm } from "@/app/components/WineForm";
 import { CellarCard } from "@/app/components/CellarCard";
 import { CellarForm } from "@/app/components/CellarForm";
 import { Modal } from "@/app/components/Modal";
+import { EventView } from "@/app/components/EventView";
 import { requestPersistentStorage } from "@/app/lib/offline-store";
 import { Wine, WineFormData, EMPTY_DETAILED_RATINGS } from "@/app/types/wine";
 import { CellarWine, CellarFormData, WineType, WINE_TYPES } from "@/app/types/cellar";
@@ -18,7 +19,7 @@ import { WineDetailModal } from "@/app/components/WineDetailModal";
 
 type SortKey = "createdAt" | "rating" | "vintage" | "price";
 type CellarSortKey = "createdAt" | "drinkFrom" | "price" | "vintage" | "grapeVariety" | "country";
-type Tab = "cellar" | "log";
+type Tab = "cellar" | "log" | "event";
 
 // セラーワインからテイスティング記録フォームに転記するための変換
 function cellarToWine(c: CellarWine): Wine {
@@ -272,6 +273,7 @@ export default function Home() {
             )}
             <button
               onClick={() => tab === "cellar" ? setShowCellarAdd(true) : setShowAdd(true)}
+              hidden={tab === "event"}
               className="w-10 h-10 rounded-full bg-[#634B99] text-white shadow-md flex items-center justify-center hover:bg-[#1E0F38] transition"
               title={tab === "cellar" ? "セラーに追加" : "ワインを追加"}>
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -313,6 +315,16 @@ export default function Home() {
                   {cellarWines.reduce((s, w) => s + w.quantity, 0)}本
                 </span>
               )}
+            </button>
+            <button
+              onClick={() => setTab("event")}
+              className={`flex-1 py-1.5 rounded-lg text-sm font-medium transition flex items-center justify-center gap-1.5 ${
+                tab === "event" ? "bg-white text-[#1E0F38] shadow-sm" : "text-[#8E75B8] hover:text-[#634B99]"
+              }`}>
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              ワイン会
             </button>
           </div>
         </div>
@@ -466,6 +478,14 @@ export default function Home() {
         className="max-w-lg mx-auto px-4 py-4 space-y-4"
         style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 1.5rem)" }}
       >
+        {/* ── ワイン会タブ ── */}
+        {tab === "event" && (
+          <EventView
+            user={user}
+            onToast={(message, type) => setToast({ message, type })}
+          />
+        )}
+
         {/* ── セラータブ ── */}
         {tab === "cellar" && (
           <>
