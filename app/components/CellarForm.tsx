@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CellarWine, CellarFormData, WINE_TYPES } from "@/app/types/cellar";
 import { PhotoUpload } from "./PhotoUpload";
 import { COUNTRIES } from "./WineForm";
+import { saveDraft, loadDraft, clearDraft } from "@/app/lib/offline-store";
 
 const makeEmpty = (): CellarFormData => ({
   name: "",
@@ -48,6 +49,21 @@ export function CellarForm({ initial, onSubmit, onCancel }: Props) {
     } : makeEmpty()
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // 入力中の内容を端末に控えておく(アプリが落ちても次回開いたときに復元できる)
+  const draftKey = initial ? `cellar:${initial.id}` : "cellar:new";
+  const [restoredAt, setRestoredAt] = useState<string | null>(null);
+
+  useEffect(() => {
+    const draft = loadDraft<CellarFormData>(draftKey);
+    if (!draft) return;
+    setForm(draft.data);
+    setRestoredAt(draft.savedAt);
+  }, [draftKey]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => saveDraft(draftKey, form), 400);
+    return () => clearTimeout(timer);
+  }, [draftKey, form]);
 
   const set = <K extends keyof CellarFormData>(key: K, value: CellarFormData[K]) =>
     setForm((f) => ({ ...f, [key]: value }));
@@ -63,12 +79,30 @@ export function CellarForm({ initial, onSubmit, onCancel }: Props) {
         setIsSubmitting(true);
         try {
           await onSubmit(form);
+          clearDraft(draftKey); // 保存できたぶんの下書きは役目を終える
         } finally {
           setIsSubmitting(false);
         }
       }}
       className="space-y-5"
     >
+      {restoredAt && (
+        <div className="flex items-start gap-2 bg-[#F3EDFF] border-2 border-[#C9B6EC] rounded-2xl px-4 py-3 text-xs text-[#4B2E83]">
+          <span aria-hidden="true">💾</span>
+          <p className="flex-1">
+            書きかけの内容を復元しました（
+            {new Date(restoredAt).toLocaleString("ja-JP", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+            時点）。続きから入力できます。
+          </p>
+          <button
+            type="button"
+            onClick={() => { clearDraft(draftKey); setForm(makeEmpty()); setRestoredAt(null); }}
+            className="shrink-0 font-semibold underline"
+          >
+            破棄
+          </button>
+        </div>
+      )}
 
       {/* ワイン種別 */}
       <div>

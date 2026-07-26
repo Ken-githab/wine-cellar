@@ -10,6 +10,7 @@ import { WineForm } from "@/app/components/WineForm";
 import { CellarCard } from "@/app/components/CellarCard";
 import { CellarForm } from "@/app/components/CellarForm";
 import { Modal } from "@/app/components/Modal";
+import { requestPersistentStorage } from "@/app/lib/offline-store";
 import { Wine, WineFormData, EMPTY_DETAILED_RATINGS } from "@/app/types/wine";
 import { CellarWine, CellarFormData, WineType, WINE_TYPES } from "@/app/types/cellar";
 import { Toast } from "@/app/components/Toast";
@@ -48,8 +49,12 @@ function cellarToWine(c: CellarWine): Wine {
 
 export default function Home() {
   const { user, loading: authLoading, signOut } = useAuth();
-  const { wines, isLoaded, isOnline, addWine, updateWine, deleteWine, migrateFromLocalStorage } = useWines(user);
-  const { cellarWines, isLoaded: cellarLoaded, addCellarWine, updateCellarWine, deleteCellarWine, drinkOne } = useCellar(user);
+  const { wines, isLoaded, isOnline, pendingCount, flushOutbox, addWine, updateWine, deleteWine, migrateFromLocalStorage } = useWines(user);
+  const { cellarWines, isLoaded: cellarLoaded, pendingCount: cellarPending, flushCellarOutbox, addCellarWine, updateCellarWine, deleteCellarWine, drinkOne } = useCellar(user);
+  const unsent = pendingCount + cellarPending;
+
+  // iOSが空き容量確保のために保存データを消すのを防ぐ
+  useEffect(() => { void requestPersistentStorage(); }, []);
 
   const [tab, setTab] = useState<Tab>("log");
   const [showAdd, setShowAdd] = useState(false);
@@ -420,6 +425,20 @@ export default function Home() {
       {!isOnline && (
         <div className="bg-amber-50 border-b border-amber-200 text-amber-800 text-xs text-center py-2 px-4">
           オフライン中 — キャッシュデータを表示しています
+        </div>
+      )}
+
+      {/* 未送信の記録 — 端末に保存済みで、通信が戻れば自動で送られる */}
+      {unsent > 0 && (
+        <div className="bg-[#F3EDFF] border-b border-[#C9B6EC] text-[#4B2E83] text-xs py-2 px-4 flex items-center justify-center gap-3">
+          <span>💾 未送信の記録が{unsent}件あります（端末に保存済み・消えません）</span>
+          <button
+            type="button"
+            onClick={() => { void flushOutbox(); void flushCellarOutbox(); }}
+            className="font-semibold underline shrink-0"
+          >
+            今すぐ送信
+          </button>
         </div>
       )}
 

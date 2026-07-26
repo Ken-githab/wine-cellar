@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Wine, WineFormData } from "@/app/types/wine";
 import type { AppUser } from "@/app/types/auth";
+import { enqueue, dequeue, loadOutbox } from "@/app/lib/offline-store";
 
 const LEGACY_KEY = "wine-cellar-data";
 const CACHE_KEY = "wine-cellar-cache";
@@ -33,6 +34,7 @@ export function useWines(user: AppUser | null) {
   const [wines, setWines] = useState<Wine[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
+  const [pendingCount, setPendingCount] = useState(0);
 
   useEffect(() => {
     setIsLoaded(false);
@@ -60,14 +62,32 @@ export function useWines(user: AppUser | null) {
   const addWine = useCallback(
     async (data: WineFormData): Promise<Wine> => {
       if (user) {
-        const { wine } = await api<{ wine: Wine }>("/api/wines", {
-          method: "POST",
-          body: JSON.stringify(data),
-        });
-        const next = [wine, ...wines];
-        setWines(next);
-        saveJson(CACHE_KEY, next);
-        return wine;
+        try {
+          const { wine } = await api<{ wine: Wine }>("/api/wines", {
+            method: "POST",
+            body: JSON.stringify(data),
+          });
+          const next = [wine, ...wines];
+          setWines(next);
+          saveJson(CACHE_KEY, next);
+          return wine;
+        } catch (error) {
+          // 通信に失敗しても記録を捨てない。未送信として保持し、画面には即反映する
+          if (navigator.onLine && !(error instanceof TypeError)) throw error;
+          const queued = enqueue({
+            kind: "wine",
+            op: "create",
+            payload: data,
+            label: data.name || "名称未設定のワイン",
+          });
+          const now = new Date().toISOString();
+          const wine: Wine = { ...data, id: queued.id, createdAt: now, updatedAt: now };
+          const next = [wine, ...wines];
+          setWines(next);
+          saveJson(CACHE_KEY, next);
+          setPendingCount(loadOutbox().length);
+          return wine;
+        }
       }
 
       const now = new Date().toISOString();
@@ -90,12 +110,34 @@ export function useWines(user: AppUser | null) {
       const existing = wines.find((w) => w.id === id);
       if (!existing) return;
 
-      const updated = user
-        ? (await api<{ wine: Wine }>(`/api/wines/${encodeURIComponent(id)}`, {
-            method: "PUT",
-            body: JSON.stringify(data),
-          })).wine
-        : { ...existing, ...data, updatedAt: new Date().toISOString() };
+      let updated: Wine = { ...existing, ...data, updatedAt: new Date().toISOString() };
+      if (user) {
+        try {
+          updated = (
+            await api<{ wine: Wine }>(`/api/wines/${encodeURIComponent(id)}`, {
+              method: "PUT",
+              body: JSON.stringify(data),
+            })
+          ).wine;
+        } catch (error) {
+          if (navigator.onLine && !(error instanceof TypeError)) throw error;
+          // 未送信のまま(id が ob- で始まる)なら、キューの中身を差し替えるだけでよい
+          const pending = loadOutbox().find((item) => item.id === id);
+          if (pending) {
+            dequeue(id);
+            enqueue({ ...pending, payload: data, label: data.name || pending.label });
+          } else {
+            enqueue({
+              kind: "wine",
+              op: "update",
+              targetId: id,
+              payload: data,
+              label: data.name || "名称未設定のワイン",
+            });
+          }
+          setPendingCount(loadOutbox().length);
+        }
+      }
 
       const next = wines.map((w) => (w.id === id ? updated : w));
       setWines(next);
@@ -116,6 +158,50 @@ export function useWines(user: AppUser | null) {
     [user, wines]
   );
 
+  // 未送信の記録をサーバーへ送り直す。成功したぶんだけキューから外すので、
+  // 途中で再び通信が切れても残りは次の機会に再送される
+  const flushOutbox = useCallback(async (): Promise<number> => {
+    if (!user) return 0;
+    const queue = loadOutbox().filter((item) => item.kind === "wine");
+    let sent = 0;
+    for (const item of queue) {
+      try {
+        if (item.op === "create") {
+          const { wine } = await api<{ wine: Wine }>("/api/wines", {
+            method: "POST",
+            body: JSON.stringify(item.payload),
+          });
+          setWines((prev) => {
+            const next = prev.map((w) => (w.id === item.id ? wine : w));
+            saveJson(CACHE_KEY, next);
+            return next;
+          });
+        } else if (item.targetId) {
+          await api(`/api/wines/${encodeURIComponent(item.targetId)}`, {
+            method: "PUT",
+            body: JSON.stringify(item.payload),
+          });
+        }
+        dequeue(item.id);
+        sent += 1;
+      } catch {
+        break; // まだ通信できない。残りは次回に回す
+      }
+    }
+    setPendingCount(loadOutbox().length);
+    return sent;
+  }, [user]);
+
+  // 起動時とオンライン復帰時に自動で再送
+  useEffect(() => {
+    if (!user) return;
+    setPendingCount(loadOutbox().length);
+    void flushOutbox();
+    const onOnline = () => void flushOutbox();
+    window.addEventListener("online", onOnline);
+    return () => window.removeEventListener("online", onOnline);
+  }, [user, flushOutbox]);
+
   const migrateFromLocalStorage = useCallback(async (): Promise<number> => {
     if (!user) return 0;
     const localWines = loadJson<Wine[]>(LEGACY_KEY, []);
@@ -130,5 +216,15 @@ export function useWines(user: AppUser | null) {
     return count;
   }, [addWine, user]);
 
-  return { wines, isLoaded, isOnline, addWine, updateWine, deleteWine, migrateFromLocalStorage };
+  return {
+    wines,
+    isLoaded,
+    isOnline,
+    pendingCount,
+    flushOutbox,
+    addWine,
+    updateWine,
+    deleteWine,
+    migrateFromLocalStorage,
+  };
 }

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import type { AppUser } from "@/app/types/auth";
 import { CellarWine, CellarFormData } from "@/app/types/cellar";
+import { enqueue, dequeue, loadOutbox } from "@/app/lib/offline-store";
 
 const CACHE_KEY = "wine-cellar-cellar-cache";
 const LOCAL_KEY = "wine-cellar-cellar-local";
@@ -31,6 +32,7 @@ async function api<T>(path: string, options?: RequestInit): Promise<T> {
 export function useCellar(user: AppUser | null) {
   const [cellarWines, setCellarWines] = useState<CellarWine[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
 
   useEffect(() => {
     setIsLoaded(false);
@@ -56,14 +58,32 @@ export function useCellar(user: AppUser | null) {
   const addCellarWine = useCallback(
     async (data: CellarFormData): Promise<CellarWine> => {
       if (user) {
-        const { cellarWine } = await api<{ cellarWine: CellarWine }>("/api/cellar", {
-          method: "POST",
-          body: JSON.stringify(data),
-        });
-        const next = [cellarWine, ...cellarWines];
-        setCellarWines(next);
-        saveJson(CACHE_KEY, next);
-        return cellarWine;
+        try {
+          const { cellarWine } = await api<{ cellarWine: CellarWine }>("/api/cellar", {
+            method: "POST",
+            body: JSON.stringify(data),
+          });
+          const next = [cellarWine, ...cellarWines];
+          setCellarWines(next);
+          saveJson(CACHE_KEY, next);
+          return cellarWine;
+        } catch (error) {
+          // 通信に失敗しても登録を捨てない。未送信として保持し、画面には即反映する
+          if (navigator.onLine && !(error instanceof TypeError)) throw error;
+          const queued = enqueue({
+            kind: "cellar",
+            op: "create",
+            payload: data,
+            label: data.name || "名称未設定のワイン",
+          });
+          const at = new Date().toISOString();
+          const cellarWine: CellarWine = { ...data, id: queued.id, createdAt: at, updatedAt: at };
+          const next = [cellarWine, ...cellarWines];
+          setCellarWines(next);
+          saveJson(CACHE_KEY, next);
+          setPendingCount(loadOutbox().length);
+          return cellarWine;
+        }
       }
 
       const now = new Date().toISOString();
@@ -130,5 +150,48 @@ export function useCellar(user: AppUser | null) {
     [cellarWines, deleteCellarWine, updateCellarWine]
   );
 
-  return { cellarWines, isLoaded, addCellarWine, updateCellarWine, deleteCellarWine, drinkOne };
+  // 未送信のセラー登録をサーバーへ送り直す(成功したぶんだけキューから外す)
+  const flushCellarOutbox = useCallback(async (): Promise<number> => {
+    if (!user) return 0;
+    let sent = 0;
+    for (const item of loadOutbox().filter((i) => i.kind === "cellar" && i.op === "create")) {
+      try {
+        const { cellarWine } = await api<{ cellarWine: CellarWine }>("/api/cellar", {
+          method: "POST",
+          body: JSON.stringify(item.payload),
+        });
+        setCellarWines((prev) => {
+          const next = prev.map((w) => (w.id === item.id ? cellarWine : w));
+          saveJson(CACHE_KEY, next);
+          return next;
+        });
+        dequeue(item.id);
+        sent += 1;
+      } catch {
+        break; // まだ通信できない。残りは次回に回す
+      }
+    }
+    setPendingCount(loadOutbox().length);
+    return sent;
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+    setPendingCount(loadOutbox().length);
+    void flushCellarOutbox();
+    const onOnline = () => void flushCellarOutbox();
+    window.addEventListener("online", onOnline);
+    return () => window.removeEventListener("online", onOnline);
+  }, [user, flushCellarOutbox]);
+
+  return {
+    cellarWines,
+    isLoaded,
+    pendingCount,
+    flushCellarOutbox,
+    addCellarWine,
+    updateCellarWine,
+    deleteCellarWine,
+    drinkOne,
+  };
 }

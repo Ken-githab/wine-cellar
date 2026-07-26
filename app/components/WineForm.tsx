@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Wine, WineFormData, EMPTY_DETAILED_RATINGS, DETAILED_RATING_LABELS, DetailedRatings,
 } from "@/app/types/wine";
 import { WINE_TYPES } from "@/app/types/cellar";
 import { StarRating } from "./StarRating";
 import { PhotoUpload } from "./PhotoUpload";
+import { saveDraft, loadDraft, clearDraft } from "@/app/lib/offline-store";
 
 export const COUNTRIES: { flag: string; name: string }[] = [
   { flag: "🇫🇷", name: "フランス" },
@@ -119,6 +120,21 @@ export function WineForm({ initial, onSubmit, onCancel }: WineFormProps) {
     } : makeEmptyForm()
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // 入力中の内容を端末に控えておく。アプリが落ちても次回開いたときに復元できる
+  const draftKey = initial ? `wine:${initial.id}` : "wine:new";
+  const [restoredAt, setRestoredAt] = useState<string | null>(null);
+
+  useEffect(() => {
+    const draft = loadDraft<WineFormData>(draftKey);
+    if (!draft) return;
+    setForm(draft.data);
+    setRestoredAt(draft.savedAt);
+  }, [draftKey]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => saveDraft(draftKey, form), 400);
+    return () => clearTimeout(timer);
+  }, [draftKey, form]);
 
   const set = <K extends keyof WineFormData>(key: K, value: WineFormData[K]) =>
     setForm((f) => ({ ...f, [key]: value }));
@@ -138,12 +154,30 @@ export function WineForm({ initial, onSubmit, onCancel }: WineFormProps) {
         setIsSubmitting(true);
         try {
           await onSubmit(form);
+          clearDraft(draftKey); // 保存できたぶんの下書きは役目を終える
         } finally {
           setIsSubmitting(false);
         }
       }}
       className="space-y-5"
     >
+      {restoredAt && (
+        <div className="flex items-start gap-2 bg-[#F3EDFF] border-2 border-[#C9B6EC] rounded-2xl px-4 py-3 text-xs text-[#4B2E83]">
+          <span aria-hidden="true">💾</span>
+          <p className="flex-1">
+            書きかけの内容を復元しました（
+            {new Date(restoredAt).toLocaleString("ja-JP", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+            時点）。続きから入力できます。
+          </p>
+          <button
+            type="button"
+            onClick={() => { clearDraft(draftKey); setForm(makeEmptyForm()); setRestoredAt(null); }}
+            className="shrink-0 font-semibold underline"
+          >
+            破棄
+          </button>
+        </div>
+      )}
 
       {/* ワイン種別 */}
       <div>
