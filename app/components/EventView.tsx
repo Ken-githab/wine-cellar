@@ -44,7 +44,7 @@ export function EventView({ user, onToast }: Props) {
           </button>
           {renaming === null ? (
             <>
-              <h2 className="text-base font-bold text-[#1E0F38] flex-1 min-w-0 truncate">{detail.title}</h2>
+              <h2 className="text-base font-bold text-[#1E0F38] flex-1 min-w-0 whitespace-pre-line break-words leading-snug">{detail.title}</h2>
               {detail.isOwner && (
                 <button
                   type="button"
@@ -58,7 +58,7 @@ export function EventView({ user, onToast }: Props) {
             </>
           ) : (
             <form
-              className="flex-1 flex items-center gap-2"
+              className="flex-1 flex items-start gap-2"
               onSubmit={async (e) => {
                 e.preventDefault();
                 const title = renaming.trim();
@@ -73,15 +73,18 @@ export function EventView({ user, onToast }: Props) {
                 }
               }}
             >
-              <input
+              <textarea
                 value={renaming}
                 onChange={(e) => setRenaming(e.target.value)}
-                aria-label="ワイン会の名前"
+                aria-label="ワイン会の名前（改行できます）"
+                rows={2}
                 autoFocus
-                className="flex-1 min-w-0 bg-white border-2 border-[#8E75B8] rounded-xl px-3 py-2 text-sm text-[#1E0F38] focus:outline-none"
+                className="flex-1 min-w-0 bg-white border-2 border-[#8E75B8] rounded-xl px-3 py-2 text-sm text-[#1E0F38] leading-snug resize-none focus:outline-none"
               />
-              <button type="submit" className="shrink-0 text-xs font-bold text-[#634B99]">保存</button>
-              <button type="button" onClick={() => setRenaming(null)} className="shrink-0 text-xs text-[#8A7CA8]">やめる</button>
+              <div className="shrink-0 flex flex-col gap-1 pt-1">
+                <button type="submit" className="text-xs font-bold text-[#634B99]">保存</button>
+                <button type="button" onClick={() => setRenaming(null)} className="text-xs text-[#8A7CA8]">やめる</button>
+              </div>
             </form>
           )}
         </div>
@@ -206,7 +209,7 @@ export function EventView({ user, onToast }: Props) {
           className="w-full text-left bg-white border-2 border-[#E8E2F4] rounded-3xl p-4 hover:border-[#C9B6EC] transition-colors"
         >
           <p className="text-xs text-[#8A7CA8]">{formatEventDate(e.eventDate)}{e.venue && `　${e.venue}`}</p>
-          <h3 className="text-sm font-bold text-[#1E0F38] mt-1">{e.title}</h3>
+          <h3 className="text-sm font-bold text-[#1E0F38] mt-1 whitespace-pre-line break-words leading-snug">{e.title}</h3>
           <p className="text-xs text-[#8A7CA8] mt-2">{e.wineCount}種</p>
         </button>
       ))}

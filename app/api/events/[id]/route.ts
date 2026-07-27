@@ -133,7 +133,12 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
   const { id } = await context.params;
 
   const data = await request.json();
-  const title = String(data.title ?? "").trim();
+  // 改行は残す(2行の名前を許容)。ただし連続した空行と前後の空白は整える
+  const title = String(data.title ?? "")
+    .replace(/\r\n?/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim()
+    .slice(0, 200);
   if (!title) {
     return NextResponse.json({ error: "名前を入力してください。" }, { status: 400 });
   }

@@ -27,6 +27,8 @@ const SORTS: { value: SortKey; label: string }[] = [
 ];
 
 const yen = (p: string) => Number(String(p).replace(/[^\d]/g, "")) || 0;
+/** プルダウンなど1行しか出せない場所では改行を空白に畳む */
+const oneLine = (s: string) => s.replace(/\s*\n\s*/g, " ").trim();
 
 interface Props {
   wines: EventWineHit[];
@@ -46,7 +48,7 @@ export function EventSearch({ wines, onOpenEvent }: Props) {
     const seen = new Map<string, { id: string; label: string }>();
     for (const w of wines) {
       if (!seen.has(w.eventId)) {
-        seen.set(w.eventId, { id: w.eventId, label: `${formatEventDate(w.eventDate)}　${w.eventTitle}` });
+        seen.set(w.eventId, { id: w.eventId, label: `${formatEventDate(w.eventDate)}　${oneLine(w.eventTitle)}` });
       }
     }
     return [...seen.values()];
@@ -176,7 +178,7 @@ export function EventSearch({ wines, onOpenEvent }: Props) {
             <div className="mt-3 flex items-center justify-between gap-3">
               <button type="button" onClick={() => onOpenEvent(w.eventId)}
                 className="text-xs text-[#634B99] font-semibold underline text-left">
-                {formatEventDate(w.eventDate)}　{w.eventTitle}
+                {formatEventDate(w.eventDate)}　{oneLine(w.eventTitle)}
               </button>
               {w.url && (
                 <a href={w.url} target="_blank" rel="noopener noreferrer"
