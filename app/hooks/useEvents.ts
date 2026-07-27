@@ -29,24 +29,30 @@ export function useEvents(user: AppUser | null) {
   const [events, setEvents] = useState<TastingEvent[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
+  const refresh = useCallback(async () => {
+    if (!user) return;
+    try {
+      const { events: next } = await api<{ events: TastingEvent[] }>("/api/events");
+      setEvents(next);
+      saveDraft("event-list", next);
+    } catch {
+      setEvents(loadDraft<TastingEvent[]>("event-list")?.data ?? []);
+    }
+  }, [user]);
+
   useEffect(() => {
     if (!user) {
-      setEvents([]);
-      setIsLoaded(true);
+      queueMicrotask(() => {
+        setEvents([]);
+        setIsLoaded(true);
+      });
       return;
     }
     (async () => {
-      try {
-        const { events: next } = await api<{ events: TastingEvent[] }>("/api/events");
-        setEvents(next);
-        saveDraft("event-list", next);
-      } catch {
-        setEvents(loadDraft<TastingEvent[]>("event-list")?.data ?? []);
-      } finally {
-        setIsLoaded(true);
-      }
+      await refresh();
+      setIsLoaded(true);
     })();
-  }, [user]);
+  }, [user, refresh]);
 
   const createEvent = useCallback(
     async (payload: unknown): Promise<{ id: string; notFound: string[] }> => {
@@ -61,7 +67,7 @@ export function useEvents(user: AppUser | null) {
     []
   );
 
-  return { events, isLoaded, createEvent };
+  return { events, isLoaded, refresh, createEvent };
 }
 
 /** 全ワイン会のワインを横断して持つ(検索用)。圏外でも直近の内容を見られるよう控えておく */
@@ -69,26 +75,32 @@ export function useEventWines(user: AppUser | null) {
   const [wines, setWines] = useState<EventWineHit[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
+  const refresh = useCallback(async () => {
+    if (!user) return;
+    try {
+      const { wines: next } = await api<{ wines: EventWineHit[] }>("/api/events/wines");
+      setWines(next);
+      saveDraft("event-wines", next);
+    } catch {
+      setWines(loadDraft<EventWineHit[]>("event-wines")?.data ?? []);
+    }
+  }, [user]);
+
   useEffect(() => {
     if (!user) {
-      setWines([]);
-      setIsLoaded(true);
+      queueMicrotask(() => {
+        setWines([]);
+        setIsLoaded(true);
+      });
       return;
     }
     (async () => {
-      try {
-        const { wines: next } = await api<{ wines: EventWineHit[] }>("/api/events/wines");
-        setWines(next);
-        saveDraft("event-wines", next);
-      } catch {
-        setWines(loadDraft<EventWineHit[]>("event-wines")?.data ?? []);
-      } finally {
-        setIsLoaded(true);
-      }
+      await refresh();
+      setIsLoaded(true);
     })();
-  }, [user]);
+  }, [user, refresh]);
 
-  return { wines, isLoaded };
+  return { wines, isLoaded, refresh };
 }
 
 /** 1つのワイン会の中身と、自分の評価の保存を扱う */

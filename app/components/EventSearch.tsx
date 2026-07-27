@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import type { EventWineHit } from "@/app/types/event";
+import { formatEventDate } from "@/app/lib/event-date";
 
 const TYPES = [
   { value: "", label: "すべて" },
@@ -45,7 +46,7 @@ export function EventSearch({ wines, onOpenEvent }: Props) {
     const seen = new Map<string, { id: string; label: string }>();
     for (const w of wines) {
       if (!seen.has(w.eventId)) {
-        seen.set(w.eventId, { id: w.eventId, label: `${w.eventDate}　${w.eventTitle}` });
+        seen.set(w.eventId, { id: w.eventId, label: `${formatEventDate(w.eventDate)}　${w.eventTitle}` });
       }
     }
     return [...seen.values()];
@@ -175,7 +176,7 @@ export function EventSearch({ wines, onOpenEvent }: Props) {
             <div className="mt-3 flex items-center justify-between gap-3">
               <button type="button" onClick={() => onOpenEvent(w.eventId)}
                 className="text-xs text-[#634B99] font-semibold underline text-left">
-                {w.eventDate}　{w.eventTitle}
+                {formatEventDate(w.eventDate)}　{w.eventTitle}
               </button>
               {w.url && (
                 <a href={w.url} target="_blank" rel="noopener noreferrer"

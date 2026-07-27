@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getRequestUser, unauthorized } from "@/app/lib/api-auth";
 import { getSql } from "@/app/lib/db";
+import { toIsoDate } from "@/app/lib/event-date";
 
 /** 参加した全ワイン会のワインを横断して返す(自分の評価つき)。検索・絞り込みは画面側で行う */
 export async function GET(request: NextRequest) {
@@ -39,7 +40,7 @@ export async function GET(request: NextRequest) {
       photoUrl: (r.photo_url as string) ?? "",
       eventId: r.event_id as string,
       eventTitle: r.event_title as string,
-      eventDate: String(r.event_date).slice(0, 10),
+      eventDate: toIsoDate(r.event_date),
       venue: (r.venue as string) ?? "",
       rating: r.rating === null || r.rating === undefined ? null : Number(r.rating),
       detailed: (r.detailed as Record<string, number>) ?? {},

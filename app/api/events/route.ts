@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getRequestUser, unauthorized } from "@/app/lib/api-auth";
 import { getSql } from "@/app/lib/db";
+import { toIsoDate } from "@/app/lib/event-date";
 
 function generateId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -29,7 +30,7 @@ export async function GET(request: NextRequest) {
     events: rows.map((r) => ({
       id: r.id as string,
       title: r.title as string,
-      eventDate: String(r.event_date).slice(0, 10),
+      eventDate: toIsoDate(r.event_date),
       venue: (r.venue as string) ?? "",
       note: (r.note as string) ?? "",
       isOwner: r.owner_user_id === user.id,

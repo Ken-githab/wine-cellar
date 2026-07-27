@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getRequestUser, unauthorized } from "@/app/lib/api-auth";
 import { getSql } from "@/app/lib/db";
+import { toIsoDate } from "@/app/lib/event-date";
 
 async function canAccess(sql: ReturnType<typeof getSql>, eventId: string, userId: string) {
   const rows = (await sql`
@@ -54,7 +55,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
     event: {
       id: event.id as string,
       title: event.title as string,
-      eventDate: String(event.event_date).slice(0, 10),
+      eventDate: toIsoDate(event.event_date),
       venue: (event.venue as string) ?? "",
       note: (event.note as string) ?? "",
       isOwner: event.owner_user_id === user.id,

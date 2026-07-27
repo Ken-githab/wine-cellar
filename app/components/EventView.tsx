@@ -6,6 +6,7 @@ import { EventWineCard } from "./EventWineCard";
 import { EventCompare } from "./EventCompare";
 import { EventSearch } from "./EventSearch";
 import type { AppUser } from "@/app/types/auth";
+import { formatEventDate } from "@/app/lib/event-date";
 
 interface Props {
   user: AppUser | null;
@@ -13,8 +14,8 @@ interface Props {
 }
 
 export function EventView({ user, onToast }: Props) {
-  const { events, isLoaded } = useEvents(user);
-  const { wines: allWines } = useEventWines(user);
+  const { events, isLoaded, refresh } = useEvents(user);
+  const { wines: allWines, refresh: refreshWines } = useEventWines(user);
   const [openId, setOpenId] = useState<string | null>(null);
   const [listMode, setListMode] = useState<"events" | "search">("events");
   const [mode, setMode] = useState<"record" | "compare">("record");
@@ -64,6 +65,7 @@ export function EventView({ user, onToast }: Props) {
                 if (!title) return;
                 try {
                   await renameEvent(title);
+                  await Promise.all([refresh(), refreshWines()]); // 一覧・検索結果にも反映
                   setRenaming(null);
                   onToast("名前を変えました", "success");
                 } catch (err) {
@@ -203,7 +205,7 @@ export function EventView({ user, onToast }: Props) {
           onClick={() => setOpenId(e.id)}
           className="w-full text-left bg-white border-2 border-[#E8E2F4] rounded-3xl p-4 hover:border-[#C9B6EC] transition-colors"
         >
-          <p className="text-xs text-[#8A7CA8]">{e.eventDate}{e.venue && `　${e.venue}`}</p>
+          <p className="text-xs text-[#8A7CA8]">{formatEventDate(e.eventDate)}{e.venue && `　${e.venue}`}</p>
           <h3 className="text-sm font-bold text-[#1E0F38] mt-1">{e.title}</h3>
           <p className="text-xs text-[#8A7CA8] mt-2">{e.wineCount}種</p>
         </button>
