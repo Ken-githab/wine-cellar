@@ -44,6 +44,9 @@ export function EventView({ user, onToast }: Props) {
           <p className="text-xs text-[#4B2E83]">
             記録済み <b className="text-sm">{recorded}</b> / {detail.wines.length}
             {detail.memberEmails.length > 1 && `　参加 ${detail.memberEmails.length}人`}
+            <span className="block mt-1 text-[#7A62A4]">
+              少量で味わった第一印象の記録です。おすすめの学習には使いません
+            </span>
           </p>
           <div className="flex gap-1.5 shrink-0">
             {(["record", "compare"] as const).map((m) => (
