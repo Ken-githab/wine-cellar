@@ -18,7 +18,8 @@ export function EventView({ user, onToast }: Props) {
   const [openId, setOpenId] = useState<string | null>(null);
   const [listMode, setListMode] = useState<"events" | "search">("events");
   const [mode, setMode] = useState<"record" | "compare">("record");
-  const { detail, isLoaded: detailLoaded, unsent, saveNote, flushNotes } = useEventDetail(openId);
+  const { detail, isLoaded: detailLoaded, unsent, saveNote, flushNotes, renameEvent } = useEventDetail(openId);
+  const [renaming, setRenaming] = useState<string | null>(null);
 
   if (!user) {
     return (
@@ -40,13 +41,52 @@ export function EventView({ user, onToast }: Props) {
           >
             ← 一覧
           </button>
-          <h2 className="text-base font-bold text-[#1E0F38] flex-1 min-w-0 truncate">{detail.title}</h2>
+          {renaming === null ? (
+            <>
+              <h2 className="text-base font-bold text-[#1E0F38] flex-1 min-w-0 truncate">{detail.title}</h2>
+              {detail.isOwner && (
+                <button
+                  type="button"
+                  onClick={() => setRenaming(detail.title)}
+                  aria-label="ワイン会の名前を変える"
+                  className="shrink-0 text-xs text-[#634B99] font-semibold underline"
+                >
+                  名前を変える
+                </button>
+              )}
+            </>
+          ) : (
+            <form
+              className="flex-1 flex items-center gap-2"
+              onSubmit={async (e) => {
+                e.preventDefault();
+                const title = renaming.trim();
+                if (!title) return;
+                try {
+                  await renameEvent(title);
+                  setRenaming(null);
+                  onToast("名前を変えました", "success");
+                } catch (err) {
+                  onToast(err instanceof Error ? err.message : "変更できませんでした", "error");
+                }
+              }}
+            >
+              <input
+                value={renaming}
+                onChange={(e) => setRenaming(e.target.value)}
+                aria-label="ワイン会の名前"
+                autoFocus
+                className="flex-1 min-w-0 bg-white border-2 border-[#8E75B8] rounded-xl px-3 py-2 text-sm text-[#1E0F38] focus:outline-none"
+              />
+              <button type="submit" className="shrink-0 text-xs font-bold text-[#634B99]">保存</button>
+              <button type="button" onClick={() => setRenaming(null)} className="shrink-0 text-xs text-[#8A7CA8]">やめる</button>
+            </form>
+          )}
         </div>
 
         <div className="flex items-center justify-between gap-3 bg-[#F3EDFF] rounded-2xl px-4 py-3">
           <p className="text-xs text-[#4B2E83]">
             記録済み <b className="text-sm">{recorded}</b> / {detail.wines.length}
-            {detail.memberEmails.length > 1 && `　参加 ${detail.memberEmails.length}人`}
             <span className="block mt-1 text-[#7A62A4]">
               少量で味わった第一印象の記録です。おすすめの学習には使いません
             </span>
@@ -165,10 +205,7 @@ export function EventView({ user, onToast }: Props) {
         >
           <p className="text-xs text-[#8A7CA8]">{e.eventDate}{e.venue && `　${e.venue}`}</p>
           <h3 className="text-sm font-bold text-[#1E0F38] mt-1">{e.title}</h3>
-          <p className="text-xs text-[#8A7CA8] mt-2">
-            {e.wineCount}種
-            {e.memberEmails.length > 1 && `　参加 ${e.memberEmails.length}人`}
-          </p>
+          <p className="text-xs text-[#8A7CA8] mt-2">{e.wineCount}種</p>
         </button>
       ))}
       </>

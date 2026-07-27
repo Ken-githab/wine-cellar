@@ -125,6 +125,33 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
   return NextResponse.json({ ok: true });
 }
 
+/** ワイン会の名前などを書き換える。主催者のみ */
+export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const user = getRequestUser(request);
+  if (!user) return unauthorized();
+  const { id } = await context.params;
+
+  const data = await request.json();
+  const title = String(data.title ?? "").trim();
+  if (!title) {
+    return NextResponse.json({ error: "名前を入力してください。" }, { status: 400 });
+  }
+
+  const sql = getSql();
+  const rows = (await sql`
+    update tasting_events
+       set title = ${title},
+           venue = coalesce(${data.venue ?? null}, venue)
+     where id = ${id} and owner_user_id = ${user.id}
+    returning id
+  `) as unknown[];
+
+  if (!rows.length) {
+    return NextResponse.json({ error: "主催者のみ変更できます。" }, { status: 403 });
+  }
+  return NextResponse.json({ ok: true });
+}
+
 /** 主催者のみ削除できる */
 export async function DELETE(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   const user = getRequestUser(request);

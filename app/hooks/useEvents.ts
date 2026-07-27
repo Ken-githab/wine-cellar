@@ -186,5 +186,23 @@ export function useEventDetail(eventId: string | null) {
     [eventId, loadQueue]
   );
 
-  return { detail, isLoaded, unsent, saveNote, flushNotes };
+  /** ワイン会の名前を変える(主催者のみ)。画面と控えも即座に合わせる */
+  const renameEvent = useCallback(
+    async (title: string) => {
+      if (!eventId) return;
+      await api(`/api/events/${encodeURIComponent(eventId)}`, {
+        method: "PATCH",
+        body: JSON.stringify({ title }),
+      });
+      setDetail((prev) => {
+        if (!prev) return prev;
+        const next = { ...prev, title };
+        saveDraft(detailKey(eventId), next);
+        return next;
+      });
+    },
+    [eventId]
+  );
+
+  return { detail, isLoaded, unsent, saveNote, flushNotes, renameEvent };
 }
