@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import type { AppUser } from "@/app/types/auth";
-import type { TastingEvent, EventDetail, EventNote } from "@/app/types/event";
+import type { TastingEvent, EventDetail, EventNote, EventWineHit } from "@/app/types/event";
 import { saveDraft, loadDraft } from "@/app/lib/offline-store";
 
 async function api<T>(path: string, options?: RequestInit): Promise<T> {
@@ -62,6 +62,33 @@ export function useEvents(user: AppUser | null) {
   );
 
   return { events, isLoaded, createEvent };
+}
+
+/** 全ワイン会のワインを横断して持つ(検索用)。圏外でも直近の内容を見られるよう控えておく */
+export function useEventWines(user: AppUser | null) {
+  const [wines, setWines] = useState<EventWineHit[]>([]);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    if (!user) {
+      setWines([]);
+      setIsLoaded(true);
+      return;
+    }
+    (async () => {
+      try {
+        const { wines: next } = await api<{ wines: EventWineHit[] }>("/api/events/wines");
+        setWines(next);
+        saveDraft("event-wines", next);
+      } catch {
+        setWines(loadDraft<EventWineHit[]>("event-wines")?.data ?? []);
+      } finally {
+        setIsLoaded(true);
+      }
+    })();
+  }, [user]);
+
+  return { wines, isLoaded };
 }
 
 /** 1つのワイン会の中身と、自分の評価の保存を扱う */

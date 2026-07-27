@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { useEvents, useEventDetail } from "@/app/hooks/useEvents";
+import { useEvents, useEventDetail, useEventWines } from "@/app/hooks/useEvents";
 import { EventWineCard } from "./EventWineCard";
 import { EventCompare } from "./EventCompare";
+import { EventSearch } from "./EventSearch";
 import type { AppUser } from "@/app/types/auth";
 
 interface Props {
@@ -13,7 +14,9 @@ interface Props {
 
 export function EventView({ user, onToast }: Props) {
   const { events, isLoaded } = useEvents(user);
+  const { wines: allWines } = useEventWines(user);
   const [openId, setOpenId] = useState<string | null>(null);
+  const [listMode, setListMode] = useState<"events" | "search">("events");
   const [mode, setMode] = useState<"record" | "compare">("record");
   const { detail, isLoaded: detailLoaded, unsent, saveNote, flushNotes } = useEventDetail(openId);
 
@@ -109,8 +112,37 @@ export function EventView({ user, onToast }: Props) {
     return <p className="text-sm text-[#8A7CA8] text-center py-12">読み込み中…</p>;
   }
 
+  const recordedCount = allWines.filter((w) => w.rating !== null).length;
+
   return (
     <div className="space-y-4">
+      {events.length > 0 && (
+        <div className="flex rounded-xl bg-[#E8E2F4] p-1">
+          {([
+            { key: "events" as const, label: `ワイン会 ${events.length}回` },
+            { key: "search" as const, label: `飲んだワインを探す ${recordedCount}本` },
+          ]).map((m) => (
+            <button
+              key={m.key}
+              type="button"
+              onClick={() => setListMode(m.key)}
+              aria-pressed={listMode === m.key}
+              className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition ${
+                listMode === m.key ? "bg-white text-[#1E0F38] shadow-sm" : "text-[#8E75B8]"
+              }`}
+            >
+              {m.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {listMode === "search" && events.length > 0 && (
+        <EventSearch wines={allWines} onOpenEvent={(id) => { setOpenId(id); setMode("record"); }} />
+      )}
+
+      {listMode === "events" && (
+      <>
       {!isLoaded && <p className="text-sm text-[#8A7CA8] text-center py-12">読み込み中…</p>}
 
       {isLoaded && events.length === 0 && (
@@ -139,6 +171,8 @@ export function EventView({ user, onToast }: Props) {
           </p>
         </button>
       ))}
+      </>
+      )}
     </div>
   );
 }

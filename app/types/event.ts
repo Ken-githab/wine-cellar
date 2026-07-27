@@ -65,3 +65,14 @@ export const EVENT_AXES = [
   { key: "flavor", label: "風味" },
   { key: "finish", label: "後味" },
 ] as const;
+
+/** 全ワイン会を横断した検索結果の1件(自分の評価つき) */
+export interface EventWineHit extends EventWine {
+  eventId: string;
+  eventTitle: string;
+  eventDate: string;
+  venue: string;
+  rating: number | null;
+  detailed: Record<string, number>;
+  memo: string;
+}
