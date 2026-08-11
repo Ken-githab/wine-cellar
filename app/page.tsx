@@ -274,6 +274,23 @@ export default function Home() {
             <h1 className="text-lg font-bold text-[#1E0F38] leading-tight">🍇 Wine Cellar</h1>
           </div>
           <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => setTab("environment")}
+              aria-label="セラー環境"
+              aria-pressed={tab === "environment"}
+              title="セラー環境"
+              className={`w-9 h-9 rounded-full flex items-center justify-center transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#634B99] focus-visible:ring-offset-2 focus-visible:ring-offset-[#FAF8FC] ${
+                tab === "environment"
+                  ? "bg-[#634B99] text-white shadow-sm"
+                  : "bg-[#E8E2F4] text-[#634B99] hover:bg-[#CABFE3]"
+              }`}
+            >
+              <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.9} d="M7.5 5a1.7 1.7 0 013.4 0v8a3.7 3.7 0 11-3.4 0V5Z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.9} d="M9.2 9v6M16.5 6.5s3 3.3 3 5.3a3 3 0 01-6 0c0-2 3-5.3 3-5.3Z" />
+              </svg>
+            </button>
             {user && (
               <button onClick={() => signOut()}
                 className="w-9 h-9 rounded-full bg-[#E8E2F4] text-[#634B99] flex items-center justify-center hover:bg-[#CABFE3] transition"
@@ -337,16 +354,6 @@ export default function Home() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
               ワイン会
-            </button>
-            <button
-              onClick={() => setTab("environment")}
-              className={`flex-1 py-1.5 rounded-lg text-sm font-medium transition flex items-center justify-center gap-1.5 ${
-                tab === "environment" ? "bg-white text-[#1E0F38] shadow-sm" : "text-[#8E75B8] hover:text-[#634B99]"
-              }`}>
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9a3 3 0 00-3 3v4.17a4 4 0 106 0V12a3 3 0 00-3-3zm0 0V4m0 8v5" />
-              </svg>
-              環境
             </button>
           </div>
         </div>
