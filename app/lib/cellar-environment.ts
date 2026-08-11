@@ -138,26 +138,6 @@ async function enqueueAlert(alert: OutboxAlert): Promise<boolean> {
   return rows.length > 0;
 }
 
-export async function enqueueDiscordConnectionTest(
-  deviceId: string,
-  temperature: number,
-  humidity: number,
-): Promise<void> {
-  await enqueueAlert({
-    deviceId,
-    dedupeKey: `discord:${deviceId}:connection-test:2026-08-11`,
-    category: "connectivity",
-    eventKind: "resolved",
-    title: "✅ Discord通知テストに成功しました",
-    description: "ワインセラー環境モニターからのテスト通知です。今後、温度・湿度・通信異常をこのチャンネルへ通知します。",
-    color: COLORS.success,
-    fields: [
-      { name: "現在温度", value: `${temperature.toFixed(1)}°C`, inline: true },
-      { name: "現在湿度", value: `${humidity.toFixed(1)}%`, inline: true },
-    ],
-  });
-}
-
 function isReminderDue(lastNotificationAt: string | null, now: Date): boolean {
   if (!lastNotificationAt) return true;
   return now.getTime() - new Date(lastNotificationAt).getTime()
