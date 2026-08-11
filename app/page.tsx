@@ -287,8 +287,7 @@ export default function Home() {
               }`}
             >
               <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.9} d="M7.5 5a1.7 1.7 0 013.4 0v8a3.7 3.7 0 11-3.4 0V5Z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.9} d="M9.2 9v6M16.5 6.5s3 3.3 3 5.3a3 3 0 01-6 0c0-2 3-5.3 3-5.3Z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.9} d="M12 4v16M5 8l14 8M5 16 19 8M4 12h16M8.5 5.5 12 4l3.5 1.5M8.5 18.5 12 20l3.5-1.5" />
               </svg>
             </button>
             {user && (
