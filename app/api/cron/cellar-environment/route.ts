@@ -1,6 +1,7 @@
 import { timingSafeEqual } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import {
+  enqueueDiscordConnectionTest,
   evaluateReadingAlerts,
   flushDiscordOutbox,
   insertEnvironmentReading,
@@ -67,6 +68,11 @@ export async function POST(request: NextRequest) {
 
   try {
     await recordPollSuccess(deviceId, sampleSlot, now);
+    await enqueueDiscordConnectionTest(
+      deviceId,
+      meterStatus.temperature,
+      meterStatus.humidity,
+    );
     const inserted = await insertEnvironmentReading({
       deviceId,
       temperature: meterStatus.temperature,
