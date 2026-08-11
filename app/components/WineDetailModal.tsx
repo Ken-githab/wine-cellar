@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Wine, DETAILED_RATING_LABELS, DetailedRatings, EMPTY_DETAILED_RATINGS } from "@/app/types/wine";
 import { WINE_TYPE_BADGE } from "@/app/types/cellar";
 import { splitGrapeVarieties } from "@/app/lib/grape-variety";
@@ -73,7 +73,24 @@ export function WineDetailModal({ wine, onEdit, onDelete, onClose }: Props) {
   const dr = { ...EMPTY_DETAILED_RATINGS, ...(wine.tastingNote.detailedRatings ?? {}) };
   const hasDr = Object.values(dr).some((v) => v > 0);
 
-  useEffect(() => { photoIndexRef.current = photoIndex; }, [photoIndex]);
+  const resetViewerTransform = useCallback(() => {
+    viewerScaleRef.current = MIN_VIEWER_SCALE;
+    viewerOffsetRef.current = { x: 0, y: 0 };
+    setViewerScale(MIN_VIEWER_SCALE);
+    setViewerOffset({ x: 0, y: 0 });
+  }, []);
+
+  const selectPhoto = useCallback((index: number) => {
+    photoIndexRef.current = index;
+    setPhotoIndex(index);
+    resetViewerTransform();
+  }, [resetViewerTransform]);
+
+  const closePhotoViewer = useCallback(() => {
+    setShowPhotoViewer(false);
+    resetViewerTransform();
+  }, [resetViewerTransform]);
+
   useEffect(() => { viewerScaleRef.current = viewerScale; }, [viewerScale]);
   useEffect(() => { viewerOffsetRef.current = viewerOffset; }, [viewerOffset]);
 
@@ -87,8 +104,8 @@ export function WineDetailModal({ wine, onEdit, onDelete, onClose }: Props) {
       touchStartX.current = null;
       if (Math.abs(diff) > 40) {
         const idx = photoIndexRef.current;
-        if (diff > 0 && idx < photos.length - 1) setPhotoIndex(idx + 1);
-        else if (diff < 0 && idx > 0) setPhotoIndex(idx - 1);
+        if (diff > 0 && idx < photos.length - 1) selectPhoto(idx + 1);
+        else if (diff < 0 && idx > 0) selectPhoto(idx - 1);
       }
     };
     const onCancel = () => { touchStartX.current = null; };
@@ -100,7 +117,7 @@ export function WineDetailModal({ wine, onEdit, onDelete, onClose }: Props) {
       el.removeEventListener("touchend", onEnd);
       el.removeEventListener("touchcancel", onCancel);
     };
-  }, [photos.length]);
+  }, [photos.length, selectPhoto]);
 
   useEffect(() => {
     const el = viewerRef.current;
@@ -188,8 +205,8 @@ export function WineDetailModal({ wine, onEdit, onDelete, onClose }: Props) {
 
         if (Math.abs(diffX) > 40 && Math.abs(diffX) > diffY) {
           const idx = photoIndexRef.current;
-          if (diffX > 0 && idx < photos.length - 1) setPhotoIndex(idx + 1);
-          else if (diffX < 0 && idx > 0) setPhotoIndex(idx - 1);
+          if (diffX > 0 && idx < photos.length - 1) selectPhoto(idx + 1);
+          else if (diffX < 0 && idx > 0) selectPhoto(idx - 1);
         }
       }
 
@@ -226,32 +243,16 @@ export function WineDetailModal({ wine, onEdit, onDelete, onClose }: Props) {
       el.removeEventListener("touchcancel", onCancel);
       window.removeEventListener("resize", onResize);
     };
-  }, [photos.length, showPhotoViewer]);
-
-  useEffect(() => {
-    if (!showPhotoViewer) {
-      viewerScaleRef.current = MIN_VIEWER_SCALE;
-      viewerOffsetRef.current = { x: 0, y: 0 };
-      setViewerScale(MIN_VIEWER_SCALE);
-      setViewerOffset({ x: 0, y: 0 });
-    }
-  }, [showPhotoViewer]);
-
-  useEffect(() => {
-    viewerScaleRef.current = MIN_VIEWER_SCALE;
-    viewerOffsetRef.current = { x: 0, y: 0 };
-    setViewerScale(MIN_VIEWER_SCALE);
-    setViewerOffset({ x: 0, y: 0 });
-  }, [photoIndex]);
+  }, [photos.length, selectPhoto, showPhotoViewer]);
 
   useEffect(() => {
     if (!showPhotoViewer) return;
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setShowPhotoViewer(false);
+      if (e.key === "Escape") closePhotoViewer();
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [showPhotoViewer]);
+  }, [closePhotoViewer, showPhotoViewer]);
 
   return (
     <>
@@ -290,7 +291,7 @@ export function WineDetailModal({ wine, onEdit, onDelete, onClose }: Props) {
           {photos.length > 0 && (
             <div
               ref={carouselRef}
-              onClick={() => setShowPhotoViewer(true)}
+              onClick={() => { resetViewerTransform(); setShowPhotoViewer(true); }}
               className="relative bg-gray-900 cursor-zoom-in"
               style={{ height: 260, touchAction: "pan-y" }}
             >
@@ -305,16 +306,16 @@ export function WineDetailModal({ wine, onEdit, onDelete, onClose }: Props) {
               {photos.length > 1 && (
                 <>
                   {photoIndex > 0 && (
-                    <button onClick={(e) => { e.stopPropagation(); setPhotoIndex((i) => i - 1); }}
+                    <button onClick={(e) => { e.stopPropagation(); selectPhoto(photoIndex - 1); }}
                       className="absolute left-3 top-1/2 -translate-y-1/2 bg-black/50 text-white rounded-full w-9 h-9 flex items-center justify-center text-xl">‹</button>
                   )}
                   {photoIndex < photos.length - 1 && (
-                    <button onClick={(e) => { e.stopPropagation(); setPhotoIndex((i) => i + 1); }}
+                    <button onClick={(e) => { e.stopPropagation(); selectPhoto(photoIndex + 1); }}
                       className="absolute right-3 top-1/2 -translate-y-1/2 bg-black/50 text-white rounded-full w-9 h-9 flex items-center justify-center text-xl">›</button>
                   )}
                   <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-2">
                     {photos.map((_, i) => (
-                      <button key={i} onClick={(e) => { e.stopPropagation(); setPhotoIndex(i); }}
+                      <button key={i} onClick={(e) => { e.stopPropagation(); selectPhoto(i); }}
                         className={`w-2 h-2 rounded-full transition ${i === photoIndex ? "bg-white" : "bg-white/40"}`} />
                     ))}
                   </div>
@@ -443,10 +444,10 @@ export function WineDetailModal({ wine, onEdit, onDelete, onClose }: Props) {
           role="dialog"
           aria-modal="true"
           aria-label="写真を拡大表示"
-          onClick={() => setShowPhotoViewer(false)}
+          onClick={closePhotoViewer}
         >
           <button
-            onClick={() => setShowPhotoViewer(false)}
+            onClick={closePhotoViewer}
             className="absolute right-4 z-10 w-10 h-10 rounded-full bg-white/15 text-white flex items-center justify-center"
             style={{ top: "max(1rem, env(safe-area-inset-top))" }}
             aria-label="閉じる"
@@ -479,7 +480,7 @@ export function WineDetailModal({ wine, onEdit, onDelete, onClose }: Props) {
               <>
                 {photoIndex > 0 && (
                   <button
-                    onClick={(e) => { e.stopPropagation(); setPhotoIndex((i) => i - 1); }}
+                    onClick={(e) => { e.stopPropagation(); selectPhoto(photoIndex - 1); }}
                     className="absolute left-3 top-1/2 -translate-y-1/2 bg-black/45 text-white rounded-full w-10 h-10 flex items-center justify-center text-2xl"
                     aria-label="前の写真"
                   >
@@ -488,7 +489,7 @@ export function WineDetailModal({ wine, onEdit, onDelete, onClose }: Props) {
                 )}
                 {photoIndex < photos.length - 1 && (
                   <button
-                    onClick={(e) => { e.stopPropagation(); setPhotoIndex((i) => i + 1); }}
+                    onClick={(e) => { e.stopPropagation(); selectPhoto(photoIndex + 1); }}
                     className="absolute right-3 top-1/2 -translate-y-1/2 bg-black/45 text-white rounded-full w-10 h-10 flex items-center justify-center text-2xl"
                     aria-label="次の写真"
                   >
@@ -502,7 +503,7 @@ export function WineDetailModal({ wine, onEdit, onDelete, onClose }: Props) {
                   {photos.map((_, i) => (
                     <button
                       key={i}
-                      onClick={(e) => { e.stopPropagation(); setPhotoIndex(i); }}
+                      onClick={(e) => { e.stopPropagation(); selectPhoto(i); }}
                       className={`w-2 h-2 rounded-full transition ${i === photoIndex ? "bg-white" : "bg-white/40"}`}
                       aria-label={`${i + 1}枚目の写真`}
                     />

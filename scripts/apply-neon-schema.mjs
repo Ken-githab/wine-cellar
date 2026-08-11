@@ -1,5 +1,8 @@
 import { readFile } from "fs/promises";
 import { neon } from "@neondatabase/serverless";
+import nextEnv from "@next/env";
+
+nextEnv.loadEnvConfig(process.cwd());
 
 if (!process.env.DATABASE_URL) {
   console.error("DATABASE_URL is not set");

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
+import dynamic from "next/dynamic";
 import { useAuth } from "@/app/hooks/useAuth";
 import { useWines } from "@/app/hooks/useWines";
 import { useCellar } from "@/app/hooks/useCellar";
@@ -17,9 +18,20 @@ import { CellarWine, CellarFormData, WineType, WINE_TYPES } from "@/app/types/ce
 import { Toast } from "@/app/components/Toast";
 import { WineDetailModal } from "@/app/components/WineDetailModal";
 
+const CellarEnvironmentView = dynamic(
+  () => import("@/app/components/CellarEnvironmentView").then((module) => module.CellarEnvironmentView),
+  {
+    loading: () => (
+      <div className="flex items-center justify-center py-24" aria-label="環境画面を読み込み中">
+        <div className="w-8 h-8 border-2 border-[#E8E2F4] border-t-[#634B99] rounded-full animate-spin" />
+      </div>
+    ),
+  },
+);
+
 type SortKey = "createdAt" | "rating" | "vintage" | "price";
 type CellarSortKey = "createdAt" | "drinkFrom" | "price" | "vintage" | "grapeVariety" | "country";
-type Tab = "cellar" | "log" | "event";
+type Tab = "cellar" | "log" | "event" | "environment";
 
 // セラーワインからテイスティング記録フォームに転記するための変換
 function cellarToWine(c: CellarWine): Wine {
@@ -273,7 +285,7 @@ export default function Home() {
             )}
             <button
               onClick={() => tab === "cellar" ? setShowCellarAdd(true) : setShowAdd(true)}
-              hidden={tab === "event"}
+              hidden={tab === "event" || tab === "environment"}
               className="w-10 h-10 rounded-full bg-[#634B99] text-white shadow-md flex items-center justify-center hover:bg-[#1E0F38] transition"
               title={tab === "cellar" ? "セラーに追加" : "ワインを追加"}>
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -325,6 +337,16 @@ export default function Home() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
               ワイン会
+            </button>
+            <button
+              onClick={() => setTab("environment")}
+              className={`flex-1 py-1.5 rounded-lg text-sm font-medium transition flex items-center justify-center gap-1.5 ${
+                tab === "environment" ? "bg-white text-[#1E0F38] shadow-sm" : "text-[#8E75B8] hover:text-[#634B99]"
+              }`}>
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9a3 3 0 00-3 3v4.17a4 4 0 106 0V12a3 3 0 00-3-3zm0 0V4m0 8v5" />
+              </svg>
+              環境
             </button>
           </div>
         </div>
@@ -485,6 +507,9 @@ export default function Home() {
             onToast={(message, type) => setToast({ message, type })}
           />
         )}
+
+        {/* ── 環境モニタリングタブ ── */}
+        {tab === "environment" && <CellarEnvironmentView />}
 
         {/* ── セラータブ ── */}
         {tab === "cellar" && (
