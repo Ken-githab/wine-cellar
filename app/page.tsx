@@ -76,6 +76,8 @@ export default function Home() {
   const [showCellarAdd, setShowCellarAdd] = useState(false);
   const [cellarEditTarget, setCellarEditTarget] = useState<CellarWine | null>(null);
   const [drinkConfirm, setDrinkConfirm] = useState<CellarWine | null>(null);
+  const [logoutConfirm, setLogoutConfirm] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
   const [drinkAndRecord, setDrinkAndRecord] = useState<Wine | null>(null);
   const [cellarPrefill, setCellarPrefill] = useState<CellarWine | null>(null);
   const [logPrefill, setLogPrefill] = useState<Wine | null>(null);
@@ -246,6 +248,18 @@ export default function Home() {
     } catch (err) { showError(err); }
   };
 
+  const confirmLogout = async () => {
+    setSigningOut(true);
+    try {
+      await signOut();
+      setLogoutConfirm(false);
+    } catch (err) {
+      showError(err);
+    } finally {
+      setSigningOut(false);
+    }
+  };
+
   const handleDrinkAndRecord = async (data: WineFormData) => {
     try { await addWine(data); setDrinkAndRecord(null); setToast({ message: "テイスティング記録を追加しました", type: "success" }); }
     catch (err) { showError(err); }
@@ -291,8 +305,11 @@ export default function Home() {
               </svg>
             </button>
             {user && (
-              <button onClick={() => signOut()}
-                className="w-9 h-9 rounded-full bg-[#E8E2F4] text-[#634B99] flex items-center justify-center hover:bg-[#CABFE3] transition"
+              <button
+                type="button"
+                onClick={() => setLogoutConfirm(true)}
+                aria-haspopup="dialog"
+                className="w-9 h-9 rounded-full bg-[#E8E2F4] text-[#634B99] flex items-center justify-center hover:bg-[#CABFE3] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#634B99] focus-visible:ring-offset-2 focus-visible:ring-offset-[#FAF8FC]"
                 title="ログアウト">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -603,6 +620,33 @@ export default function Home() {
       </main>
 
       {/* ── モーダル類 ── */}
+
+      {/* ログアウト確認 */}
+      {logoutConfirm && (
+        <Modal title="ログアウトしますか？" onClose={() => setLogoutConfirm(false)}>
+          <p className="text-sm leading-relaxed text-[#634B99]">
+            この端末でのログインを終了します。再開するには、もう一度ログインが必要です。
+          </p>
+          <div className="mt-5 grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => setLogoutConfirm(false)}
+              disabled={signingOut}
+              className="rounded-2xl bg-[#E8E2F4] px-4 py-3 text-sm font-semibold text-[#634B99] transition hover:bg-[#CABFE3] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              キャンセル
+            </button>
+            <button
+              type="button"
+              onClick={() => void confirmLogout()}
+              disabled={signingOut}
+              className="rounded-2xl bg-[#A63D54] px-4 py-3 text-sm font-semibold text-white shadow-[0_4px_16px_rgba(166,61,84,0.28)] transition hover:bg-[#8D3046] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {signingOut ? "ログアウト中…" : "ログアウト"}
+            </button>
+          </div>
+        </Modal>
+      )}
 
       {/* セラー追加 */}
       {showCellarAdd && (
