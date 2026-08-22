@@ -55,5 +55,7 @@ export function cellarFromRow(row: any): CellarWine {
     url: row.url ?? "",
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    activeConsumptionId: row.active_consumption_id ?? null,
+    drinkStatus: row.drink_status ?? "available",
   };
 }

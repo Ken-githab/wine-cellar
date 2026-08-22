@@ -29,9 +29,17 @@ export async function POST(request: NextRequest) {
   const passwordHash = hashPassword(plainPassword);
   try {
     const rows = await sql`
-      insert into app_users (email, password_hash)
-      values (${normalizedEmail}, ${passwordHash})
-      returning id, email
+      with inserted_user as (
+        insert into app_users (email, password_hash)
+        values (${normalizedEmail}, ${passwordHash})
+        returning id, email
+      ), inserted_membership as (
+        insert into household_members (household_id, user_id)
+        select '00000000-0000-0000-0000-000000000001', id
+        from inserted_user
+        on conflict (user_id) do nothing
+      )
+      select id, email from inserted_user
     ` as Array<Record<string, string>>;
     const user = { id: rows[0].id as string, email: rows[0].email as string };
     const response = NextResponse.json({ user });
@@ -47,6 +55,12 @@ export async function POST(request: NextRequest) {
     if (!existing[0]) {
       return NextResponse.json({ error: "このメールアドレスはすでに登録済みです。" }, { status: 409 });
     }
+
+    await sql`
+      insert into household_members (household_id, user_id)
+      values ('00000000-0000-0000-0000-000000000001', ${existing[0].id})
+      on conflict (user_id) do nothing
+    `;
 
     const user = { id: existing[0].id as string, email: existing[0].email as string };
     const response = NextResponse.json({ user });

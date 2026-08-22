@@ -59,6 +59,12 @@ export function CellarCard({ wine, onEdit, onDelete, onDrink }: Props) {
   const windowStatus = drinkWindowStatus(wine.drinkFrom, wine.drinkUntil);
   const typeBadge = WINE_TYPE_BADGE[wine.wineType ?? ""];
   const grapeVarieties = splitGrapeVarieties(wine.grapeVariety ?? "");
+  const drinkCompleted = wine.drinkStatus === "recorded" || wine.drinkStatus === "no_record";
+  const drinkLabel = wine.drinkStatus === "recorded"
+    ? "記録済み"
+    : wine.drinkStatus === "no_record"
+      ? "飲用済み"
+      : "飲む";
 
   const windowBadge = windowStatus === "peak"
     ? { label: "今が旬", cls: "bg-emerald-50 text-emerald-700" }
@@ -164,11 +170,16 @@ export function CellarCard({ wine, onEdit, onDelete, onDrink }: Props) {
               </button>
               <button
                 onClick={() => onDrink(wine)}
-                className="flex items-center gap-1.5 px-4 py-2 bg-[#634B99] text-white rounded-2xl text-sm font-semibold hover:bg-[#1E0F38] transition active:scale-95 shadow-[0_2px_8px_rgba(99,75,153,0.3)]">
+                disabled={drinkCompleted}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-2xl text-sm font-semibold transition ${
+                  drinkCompleted
+                    ? "cursor-default bg-[#F0EBF8] text-[#8E75B8]"
+                    : "bg-[#634B99] text-white hover:bg-[#1E0F38] active:scale-95 shadow-[0_2px_8px_rgba(99,75,153,0.3)]"
+                }`}>
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                飲む
+                {drinkLabel}
               </button>
             </div>
           </div>

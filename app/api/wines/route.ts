@@ -26,23 +26,48 @@ export async function POST(request: NextRequest) {
   if (!user) return unauthorized();
 
   const data = await request.json();
+  const cellarConsumptionId = typeof data.cellarConsumptionId === "string"
+    ? data.cellarConsumptionId
+    : null;
   const now = new Date().toISOString();
   const id = generateId();
   const sql = getSql();
 
-  const rows = await sql`
-    insert into wines (
-      id, user_id, name, producer, vintage, country, region, grape_variety, wine_type,
-      price, url, use_coravin, good_value, photos, tasting_note, created_at, updated_at
-    )
-    values (
-      ${id}, ${user.id}, ${data.name ?? ""}, ${data.producer ?? ""}, ${data.vintage || null},
-      ${data.country ?? ""}, ${data.region ?? ""}, ${data.grapeVariety ?? ""}, ${data.wineType || null},
-      ${data.price || null}, ${data.url || null}, ${Boolean(data.useCoravin)},
-      ${Boolean(data.goodValue)}, ${JSON.stringify(data.photos ?? [])}::jsonb,
-      ${JSON.stringify(data.tastingNote ?? {})}::jsonb, ${now}, ${now}
-    )
-    returning *
-  ` as Array<Record<string, unknown>>;
-  return NextResponse.json({ wine: wineFromRow(rows[0]) });
+  try {
+    const results = await sql.transaction((tx) => [
+      tx`
+        insert into wines (
+          id, user_id, name, producer, vintage, country, region, grape_variety, wine_type,
+          price, url, use_coravin, good_value, photos, tasting_note, created_at, updated_at
+        )
+        values (
+          ${id}, ${user.id}, ${data.name ?? ""}, ${data.producer ?? ""}, ${data.vintage || null},
+          ${data.country ?? ""}, ${data.region ?? ""}, ${data.grapeVariety ?? ""}, ${data.wineType || null},
+          ${data.price || null}, ${data.url || null}, ${Boolean(data.useCoravin)},
+          ${Boolean(data.goodValue)}, ${JSON.stringify(data.photos ?? [])}::jsonb,
+          ${JSON.stringify(data.tastingNote ?? {})}::jsonb, ${now}, ${now}
+        )
+        returning *
+      `,
+      ...(cellarConsumptionId
+        ? [tx`
+            select * from complete_cellar_consumption(
+              ${cellarConsumptionId}, ${user.id}, 'recorded', ${id}
+            )
+          `]
+        : []),
+    ]);
+
+    const rows = results[0] as Array<Record<string, unknown>>;
+    return NextResponse.json({ wine: wineFromRow(rows[0]) });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "記録の保存に失敗しました。";
+    if (cellarConsumptionId && (message.includes("not found") || message.includes("access denied"))) {
+      return NextResponse.json(
+        { error: "この飲用処理はすでに完了しているか、見つかりません。画面を更新してください。" },
+        { status: 409 },
+      );
+    }
+    throw error;
+  }
 }

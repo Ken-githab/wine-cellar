@@ -33,6 +33,11 @@ export interface CellarWine {
   url: string;
   createdAt: string;
   updatedAt: string;
+  activeConsumptionId: string | null;
+  drinkStatus: "available" | "pending" | "recorded" | "no_record";
 }
 
-export type CellarFormData = Omit<CellarWine, "id" | "createdAt" | "updatedAt">;
+export type CellarFormData = Omit<
+  CellarWine,
+  "id" | "createdAt" | "updatedAt" | "activeConsumptionId" | "drinkStatus"
+>;

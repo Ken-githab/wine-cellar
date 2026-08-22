@@ -9,6 +9,10 @@ const LEGACY_KEY = "wine-cellar-data";
 const CACHE_KEY = "wine-cellar-cache";
 const LOCAL_KEY = "wine-cellar-local";
 
+interface AddWineOptions {
+  cellarConsumptionId?: string;
+}
+
 function loadJson<T>(key: string, fallback: T): T {
   try { return JSON.parse(localStorage.getItem(key) ?? "") as T; } catch { return fallback; }
 }
@@ -35,6 +39,7 @@ export function useWines(user: AppUser | null) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
   const [pendingCount, setPendingCount] = useState(0);
+  const cacheKey = user ? `${CACHE_KEY}:${user.id}` : CACHE_KEY;
 
   useEffect(() => {
     setIsLoaded(false);
@@ -48,31 +53,33 @@ export function useWines(user: AppUser | null) {
       try {
         const { wines: nextWines } = await api<{ wines: Wine[] }>("/api/wines");
         setWines(nextWines);
-        saveJson(CACHE_KEY, nextWines);
+        saveJson(cacheKey, nextWines);
         setIsOnline(true);
       } catch {
-        setWines(loadJson<Wine[]>(CACHE_KEY, []));
+        setWines(loadJson<Wine[]>(cacheKey, []));
         setIsOnline(false);
       } finally {
         setIsLoaded(true);
       }
     })();
-  }, [user?.id, user]);
+  }, [cacheKey, user?.id, user]);
 
   const addWine = useCallback(
-    async (data: WineFormData): Promise<Wine> => {
+    async (data: WineFormData, options?: AddWineOptions): Promise<Wine> => {
       if (user) {
         try {
           const { wine } = await api<{ wine: Wine }>("/api/wines", {
             method: "POST",
-            body: JSON.stringify(data),
+            body: JSON.stringify({ ...data, cellarConsumptionId: options?.cellarConsumptionId }),
           });
           const next = [wine, ...wines];
           setWines(next);
-          saveJson(CACHE_KEY, next);
+          saveJson(cacheKey, next);
           return wine;
         } catch (error) {
-          // 通信に失敗しても記録を捨てない。未送信として保持し、画面には即反映する
+          // 共有在庫からの飲用は、在庫状態との原子性を守るためオンライン時だけ保存する。
+          if (options?.cellarConsumptionId) throw error;
+          // 通信に失敗しても通常の記録を捨てない。未送信として保持し、画面には即反映する
           if (navigator.onLine && !(error instanceof TypeError)) throw error;
           const queued = enqueue({
             kind: "wine",
@@ -84,7 +91,7 @@ export function useWines(user: AppUser | null) {
           const wine: Wine = { ...data, id: queued.id, createdAt: now, updatedAt: now };
           const next = [wine, ...wines];
           setWines(next);
-          saveJson(CACHE_KEY, next);
+          saveJson(cacheKey, next);
           setPendingCount(loadOutbox().length);
           return wine;
         }
@@ -102,7 +109,7 @@ export function useWines(user: AppUser | null) {
       saveJson(LOCAL_KEY, next);
       return wine;
     },
-    [user, wines]
+    [cacheKey, user, wines]
   );
 
   const updateWine = useCallback(
@@ -141,9 +148,9 @@ export function useWines(user: AppUser | null) {
 
       const next = wines.map((w) => (w.id === id ? updated : w));
       setWines(next);
-      saveJson(user ? CACHE_KEY : LOCAL_KEY, next);
+      saveJson(user ? cacheKey : LOCAL_KEY, next);
     },
-    [user, wines]
+    [cacheKey, user, wines]
   );
 
   const deleteWine = useCallback(
@@ -153,9 +160,9 @@ export function useWines(user: AppUser | null) {
       }
       const next = wines.filter((w) => w.id !== id);
       setWines(next);
-      saveJson(user ? CACHE_KEY : LOCAL_KEY, next);
+      saveJson(user ? cacheKey : LOCAL_KEY, next);
     },
-    [user, wines]
+    [cacheKey, user, wines]
   );
 
   // 未送信の記録をサーバーへ送り直す。成功したぶんだけキューから外すので、
@@ -173,7 +180,7 @@ export function useWines(user: AppUser | null) {
           });
           setWines((prev) => {
             const next = prev.map((w) => (w.id === item.id ? wine : w));
-            saveJson(CACHE_KEY, next);
+            saveJson(cacheKey, next);
             return next;
           });
         } else if (item.targetId) {
@@ -190,7 +197,7 @@ export function useWines(user: AppUser | null) {
     }
     setPendingCount(loadOutbox().length);
     return sent;
-  }, [user]);
+  }, [cacheKey, user]);
 
   // 起動時とオンライン復帰時に自動で再送
   useEffect(() => {

@@ -63,7 +63,18 @@ function cellarToWine(c: CellarWine): Wine {
 export default function Home() {
   const { user, loading: authLoading, signOut } = useAuth();
   const { wines, isLoaded, isOnline, pendingCount, flushOutbox, addWine, updateWine, deleteWine, migrateFromLocalStorage } = useWines(user);
-  const { cellarWines, isLoaded: cellarLoaded, pendingCount: cellarPending, flushCellarOutbox, addCellarWine, updateCellarWine, deleteCellarWine, drinkOne } = useCellar(user);
+  const {
+    cellarWines,
+    isLoaded: cellarLoaded,
+    pendingCount: cellarPending,
+    refreshCellar,
+    flushCellarOutbox,
+    addCellarWine,
+    updateCellarWine,
+    deleteCellarWine,
+    startDrink,
+    completeDrinkWithoutRecord,
+  } = useCellar(user);
   const unsent = pendingCount + cellarPending;
 
   // iOSが空き容量確保のために保存データを消すのを防ぐ
@@ -78,7 +89,10 @@ export default function Home() {
   const [drinkConfirm, setDrinkConfirm] = useState<CellarWine | null>(null);
   const [logoutConfirm, setLogoutConfirm] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
-  const [drinkAndRecord, setDrinkAndRecord] = useState<Wine | null>(null);
+  const [drinkAndRecord, setDrinkAndRecord] = useState<{
+    wine: Wine;
+    consumptionId: string;
+  } | null>(null);
   const [cellarPrefill, setCellarPrefill] = useState<CellarWine | null>(null);
   const [logPrefill, setLogPrefill] = useState<Wine | null>(null);
 
@@ -204,6 +218,7 @@ export default function Home() {
       const d = JSON.parse(json);
       setCellarPrefill({
         id: "", createdAt: "", updatedAt: "",
+        activeConsumptionId: null, drinkStatus: "available",
         name: String(d.name ?? ""), producer: String(d.producer ?? ""), vintage: String(d.vintage ?? ""),
         country: String(d.country ?? ""), region: String(d.region ?? ""), grapeVariety: String(d.grapeVariety ?? ""),
         price: String(d.price ?? ""), quantity: 1, wineType: (d.wineType ?? "") as WineType,
@@ -238,12 +253,14 @@ export default function Home() {
     const wine = drinkConfirm;
     setDrinkConfirm(null);
     try {
-      const remaining = await drinkOne(wine.id, { keepPhotos: record });
+      const { consumptionId, remainingQuantity } = await startDrink(wine.id);
       if (record) {
-        setDrinkAndRecord(cellarToWine(wine));
+        setDrinkAndRecord({ wine: cellarToWine(wine), consumptionId });
         setTab("log");
       } else {
-        setToast({ message: remaining > 0 ? `残り ${remaining} 本` : `「${wine.name}」を飲み終わりました`, type: "success" });
+        await completeDrinkWithoutRecord(wine.id, consumptionId);
+        const remainingLabel = remainingQuantity > 0 ? `（残り ${remainingQuantity} 本）` : "";
+        setToast({ message: `「${wine.name}」を飲用済みにしました${remainingLabel}`, type: "success" });
       }
     } catch (err) { showError(err); }
   };
@@ -261,7 +278,13 @@ export default function Home() {
   };
 
   const handleDrinkAndRecord = async (data: WineFormData) => {
-    try { await addWine(data); setDrinkAndRecord(null); setToast({ message: "テイスティング記録を追加しました", type: "success" }); }
+    if (!drinkAndRecord) return;
+    try {
+      await addWine(data, { cellarConsumptionId: drinkAndRecord.consumptionId });
+      await refreshCellar();
+      setDrinkAndRecord(null);
+      setToast({ message: "テイスティング記録を追加しました", type: "success" });
+    }
     catch (err) { showError(err); }
   };
 
@@ -693,7 +716,7 @@ export default function Home() {
       {/* 飲む→テイスティング記録転記 */}
       {drinkAndRecord && (
         <Modal title="テイスティング記録" onClose={() => setDrinkAndRecord(null)}>
-          <WineForm initial={drinkAndRecord} onSubmit={handleDrinkAndRecord} onCancel={() => setDrinkAndRecord(null)} />
+          <WineForm initial={drinkAndRecord.wine} onSubmit={handleDrinkAndRecord} onCancel={() => setDrinkAndRecord(null)} />
         </Modal>
       )}
 

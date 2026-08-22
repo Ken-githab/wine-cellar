@@ -18,7 +18,12 @@ export async function PUT(request: NextRequest, { params }: Params) {
   const sql = getSql();
 
   const oldRows = await sql`
-    select photos from cellar_wines where id = ${id} and user_id = ${user.id}
+    select c.photos
+    from cellar_wines c
+    join household_members hm
+      on hm.household_id = c.household_id
+     and hm.user_id = ${user.id}
+    where c.id = ${id}
   ` as Array<{ photos: unknown }>;
 
   const rows = await sql`
@@ -38,7 +43,13 @@ export async function PUT(request: NextRequest, { params }: Params) {
         photos = ${JSON.stringify(data.photos ?? [])}::jsonb,
         url = ${data.url || null},
         updated_at = ${now}
-    where id = ${id} and user_id = ${user.id}
+    where id = ${id}
+      and exists (
+        select 1
+        from household_members hm
+        where hm.household_id = cellar_wines.household_id
+          and hm.user_id = ${user.id}
+      )
     returning *
   ` as Array<Record<string, unknown>>;
 
@@ -57,9 +68,23 @@ export async function DELETE(request: NextRequest, { params }: Params) {
   // keepPhotos=1 のときはBlobを消さない（記録はこの削除の後に作成される）
   const keepPhotos = request.nextUrl.searchParams.get("keepPhotos") === "1";
   const oldRows = await sql`
-    select photos from cellar_wines where id = ${id} and user_id = ${user.id}
+    select c.photos
+    from cellar_wines c
+    join household_members hm
+      on hm.household_id = c.household_id
+     and hm.user_id = ${user.id}
+    where c.id = ${id}
   ` as Array<{ photos: unknown }>;
-  await sql`delete from cellar_wines where id = ${id} and user_id = ${user.id}`;
+  await sql`
+    delete from cellar_wines
+    where id = ${id}
+      and exists (
+        select 1
+        from household_members hm
+        where hm.household_id = cellar_wines.household_id
+          and hm.user_id = ${user.id}
+      )
+  `;
   if (!keepPhotos) await deletePhotosIfUnreferenced(sql, oldRows[0]?.photos);
   return NextResponse.json({ ok: true });
 }
