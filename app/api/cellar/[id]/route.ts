@@ -3,6 +3,7 @@ import { getRequestUser, unauthorized } from "@/app/lib/api-auth";
 import { getSql } from "@/app/lib/db";
 import { cellarFromRow } from "@/app/lib/wine-mappers";
 import { deletePhotosIfUnreferenced } from "@/app/lib/photo-cleanup";
+import { isStorageLocation } from "@/app/types/cellar";
 
 interface Params {
   params: Promise<{ id: string }>;
@@ -14,6 +15,9 @@ export async function PUT(request: NextRequest, { params }: Params) {
 
   const { id } = await params;
   const data = await request.json();
+  if (data.storageLocation !== undefined && !isStorageLocation(data.storageLocation)) {
+    return NextResponse.json({ error: "保管先が正しくありません。" }, { status: 400 });
+  }
   const now = new Date().toISOString();
   const sql = getSql();
 
@@ -38,6 +42,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
         quantity = ${Number(data.quantity) || 1},
         wine_type = ${data.wineType || null},
         purchase_source = ${data.purchaseSource || null},
+        storage_location = coalesce(${data.storageLocation ?? null}, storage_location),
         drink_from = ${data.drinkFrom || null},
         drink_until = ${data.drinkUntil || null},
         photos = ${JSON.stringify(data.photos ?? [])}::jsonb,

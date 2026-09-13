@@ -1,5 +1,11 @@
 export type WineType = "red" | "white" | "sparkling" | "rose" | "";
 
+export type StorageLocation = "home" | "enoteca";
+
+export function isStorageLocation(value: unknown): value is StorageLocation {
+  return value === "home" || value === "enoteca";
+}
+
 export const WINE_TYPES: { value: WineType; label: string; color: string }[] = [
   { value: "red",       label: "赤",            color: "bg-red-100 text-red-700 border-red-200" },
   { value: "white",     label: "白",            color: "bg-yellow-50 text-yellow-700 border-yellow-200" },
@@ -27,6 +33,7 @@ export interface CellarWine {
   quantity: number;
   wineType: WineType;
   purchaseSource: string;
+  storageLocation: StorageLocation;
   drinkFrom: string;  // 例: "2024"
   drinkUntil: string; // 例: "2030"
   photos: string[];

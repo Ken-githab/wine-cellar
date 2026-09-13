@@ -49,6 +49,7 @@ export function cellarFromRow(row: any): CellarWine {
     quantity: row.quantity ?? 1,
     wineType: row.wine_type ?? "",
     purchaseSource: row.purchase_source ?? "",
+    storageLocation: row.storage_location ?? "home",
     drinkFrom: row.drink_from ?? "",
     drinkUntil: row.drink_until ?? "",
     photos: Array.isArray(row.photos) ? row.photos : [],

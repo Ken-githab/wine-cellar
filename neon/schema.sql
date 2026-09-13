@@ -64,6 +64,8 @@ create table if not exists cellar_wines (
   quantity integer not null default 1,
   wine_type text,
   purchase_source text,
+  storage_location text not null default 'home'
+    constraint cellar_wines_storage_location_check check (storage_location in ('home', 'enoteca')),
   drink_from text,
   drink_until text,
   photos jsonb not null default '[]'::jsonb,

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { CellarWine, CellarFormData, WINE_TYPES } from "@/app/types/cellar";
+import { useState, useEffect, useId } from "react";
+import { CellarWine, CellarFormData, WINE_TYPES, isStorageLocation } from "@/app/types/cellar";
 import { PhotoUpload } from "./PhotoUpload";
 import { COUNTRIES } from "./WineForm";
 import { saveDraft, loadDraft, clearDraft } from "@/app/lib/offline-store";
@@ -17,6 +17,7 @@ const makeEmpty = (): CellarFormData => ({
   quantity: 1,
   wineType: "",
   purchaseSource: "",
+  storageLocation: "home",
   drinkFrom: "",
   drinkUntil: "",
   photos: [],
@@ -30,6 +31,7 @@ interface Props {
 }
 
 export function CellarForm({ initial, onSubmit, onCancel }: Props) {
+  const storageLocationId = useId();
   const [form, setForm] = useState<CellarFormData>(() =>
     initial ? {
       name: initial.name,
@@ -42,6 +44,7 @@ export function CellarForm({ initial, onSubmit, onCancel }: Props) {
       quantity: initial.quantity,
       wineType: initial.wineType,
       purchaseSource: initial.purchaseSource,
+      storageLocation: initial.storageLocation ?? "home",
       drinkFrom: initial.drinkFrom,
       drinkUntil: initial.drinkUntil,
       photos: initial.photos,
@@ -56,7 +59,11 @@ export function CellarForm({ initial, onSubmit, onCancel }: Props) {
   useEffect(() => {
     const draft = loadDraft<CellarFormData>(draftKey);
     if (!draft) return;
-    setForm(draft.data);
+    setForm((current) => ({
+      ...draft.data,
+      // 保管先追加前の下書きは、編集対象の保管先（新規なら自宅）を引き継ぐ。
+      storageLocation: draft.data.storageLocation ?? current.storageLocation,
+    }));
     setRestoredAt(draft.savedAt);
   }, [draftKey]);
 
@@ -179,6 +186,21 @@ export function CellarForm({ initial, onSubmit, onCancel }: Props) {
       {/* 在庫・飲み頃 */}
       <div className="border-t border-[#E8E2F4] pt-5 space-y-4">
         <h3 className="font-semibold text-[#1E0F38]">在庫 / 飲み頃</h3>
+
+        <div>
+          <label htmlFor={storageLocationId} className={labelCls}>保管先</label>
+          <select
+            id={storageLocationId}
+            className={inputCls}
+            value={form.storageLocation}
+            onChange={(e) => {
+              if (isStorageLocation(e.target.value)) set("storageLocation", e.target.value);
+            }}
+          >
+            <option value="home">自宅セラー</option>
+            <option value="enoteca">エノテカセラー</option>
+          </select>
+        </div>
 
         <div>
           <label className={labelCls}>本数 <span className="text-red-500">*</span></label>

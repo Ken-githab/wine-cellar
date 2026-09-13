@@ -219,6 +219,7 @@ export default function Home() {
       setCellarPrefill({
         id: "", createdAt: "", updatedAt: "",
         activeConsumptionId: null, drinkStatus: "available",
+        storageLocation: "home",
         name: String(d.name ?? ""), producer: String(d.producer ?? ""), vintage: String(d.vintage ?? ""),
         country: String(d.country ?? ""), region: String(d.region ?? ""), grapeVariety: String(d.grapeVariety ?? ""),
         price: String(d.price ?? ""), quantity: 1, wineType: (d.wineType ?? "") as WineType,

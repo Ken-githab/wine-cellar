@@ -83,6 +83,13 @@ export function CellarCard({ wine, onEdit, onDelete, onDrink }: Props) {
         )}
 
         <div className="p-4">
+          {wine.storageLocation === "enoteca" && (
+            <div className="mb-2">
+              <span className="inline-block text-xs font-medium px-2 py-0.5 rounded-full bg-[#E8E2F4] text-[#634B99]" aria-label="保管先：エノテカセラー">
+                エノテカ
+              </span>
+            </div>
+          )}
           {/* Header row */}
           <div className="flex items-start gap-2 mb-2">
             <div className="flex-1 min-w-0">

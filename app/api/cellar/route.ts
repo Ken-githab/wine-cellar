@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getRequestUser, unauthorized } from "@/app/lib/api-auth";
 import { getSql } from "@/app/lib/db";
 import { cellarFromRow } from "@/app/lib/wine-mappers";
+import { isStorageLocation } from "@/app/types/cellar";
 
 function generateId() {
   return `cellar-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -37,6 +38,9 @@ export async function POST(request: NextRequest) {
   if (!user) return unauthorized();
 
   const data = await request.json();
+  if (data.storageLocation !== undefined && !isStorageLocation(data.storageLocation)) {
+    return NextResponse.json({ error: "保管先が正しくありません。" }, { status: 400 });
+  }
   const now = new Date().toISOString();
   const id = generateId();
   const sql = getSql();
@@ -44,14 +48,14 @@ export async function POST(request: NextRequest) {
   const rows = await sql`
     insert into cellar_wines (
       id, user_id, household_id, name, producer, vintage, country, region, grape_variety,
-      price, quantity, wine_type, purchase_source, drink_from, drink_until,
+      price, quantity, wine_type, purchase_source, storage_location, drink_from, drink_until,
       photos, url, created_at, updated_at
     )
     select
       ${id}, ${user.id}, hm.household_id, ${data.name ?? ""}, ${data.producer ?? ""}, ${data.vintage || null},
       ${data.country ?? ""}, ${data.region ?? ""}, ${data.grapeVariety ?? ""},
       ${data.price || null}, ${Number(data.quantity) || 1}, ${data.wineType || null},
-      ${data.purchaseSource || null}, ${data.drinkFrom || null}, ${data.drinkUntil || null},
+      ${data.purchaseSource || null}, ${data.storageLocation ?? "home"}, ${data.drinkFrom || null}, ${data.drinkUntil || null},
       ${JSON.stringify(data.photos ?? [])}::jsonb, ${data.url || null}, ${now}, ${now}
     from household_members hm
     where hm.user_id = ${user.id}
