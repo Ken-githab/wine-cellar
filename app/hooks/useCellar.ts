@@ -37,7 +37,11 @@ export function useCellar(user: AppUser | null) {
 
   const refreshCellar = useCallback(async (): Promise<CellarWine[]> => {
     if (!user) return [];
-    const { cellarWines: nextCellarWines } = await api<{ cellarWines: CellarWine[] }>("/api/cellar");
+    // 写真の追加など別の端末・処理で更新された在庫も、古い一覧キャッシュを使わず反映する。
+    const { cellarWines: nextCellarWines } = await api<{ cellarWines: CellarWine[] }>(
+      `/api/cellar?refresh=${Date.now()}`,
+      { cache: "no-store" }
+    );
     setCellarWines(nextCellarWines);
     saveJson(cacheKey, nextCellarWines);
     return nextCellarWines;
