@@ -83,13 +83,6 @@ export function CellarCard({ wine, onEdit, onDelete, onDrink }: Props) {
         )}
 
         <div className="p-4">
-          {wine.storageLocation === "enoteca" && (
-            <div className="mb-2">
-              <span className="inline-block text-xs font-medium px-2 py-0.5 rounded-full bg-[#E8E2F4] text-[#634B99]" aria-label="保管先：エノテカセラー">
-                エノテカ
-              </span>
-            </div>
-          )}
           {/* Header row */}
           <div className="flex items-start gap-2 mb-2">
             <div className="flex-1 min-w-0">
@@ -126,16 +119,25 @@ export function CellarCard({ wine, onEdit, onDelete, onDrink }: Props) {
             </div>
           )}
 
-          {/* Drink window */}
-          {windowLabel && (
-            <div className="flex items-center gap-2 mb-3">
-              <svg className="w-3.5 h-3.5 text-[#8E75B8] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-              <span className="text-xs text-[#8E75B8]">{windowLabel}</span>
-              {windowBadge && (
-                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${windowBadge.cls}`}>
-                  {windowBadge.label}
+          {/* Drink window / storage location */}
+          {(windowLabel || wine.storageLocation === "enoteca") && (
+            <div className="flex items-center justify-between gap-2 mb-3">
+              {windowLabel ? (
+                <div className="flex items-center gap-2 min-w-0">
+                  <svg className="w-3.5 h-3.5 text-[#8E75B8] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <span className="text-xs text-[#8E75B8] truncate">{windowLabel}</span>
+                  {windowBadge && (
+                    <span className={`shrink-0 text-xs px-2 py-0.5 rounded-full font-medium ${windowBadge.cls}`}>
+                      {windowBadge.label}
+                    </span>
+                  )}
+                </div>
+              ) : <span />}
+              {wine.storageLocation === "enoteca" && (
+                <span className="shrink-0 text-xs font-medium px-2 py-0.5 rounded-full bg-[#E8E2F4] text-[#634B99]" aria-label="保管先：エノテカセラー">
+                  エノテカ
                 </span>
               )}
             </div>
